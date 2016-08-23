@@ -4,8 +4,14 @@ version = "0.0.0"
 authors = ["Geordon Worley <vadixidav@gmail.com>"]
 
 [dependencies]
-rand = "0.3.13"
-itertools = "0.4.8"
-num = "0.1.30"
-crossbeam = "0.2.5"
+rand = "0.3.14"
+itertools = "0.4.18"
+num = "0.1.35"
+crossbeam = "0.2.10"
+glowygraph = "0.7.1"
+nalgebra = "0.9.0"
+custom_derive = "0.1.5"
+enum_derive = "0.1.7"
+enum_primitive = "0.1.0"
+
 mli = {git = "https://github.com/vadixidav/mli"}
