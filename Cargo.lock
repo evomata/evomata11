@@ -7,7 +7,7 @@ dependencies = [
  "enum_derive 0.1.7 (registry+https://github.com/rust-lang/crates.io-index)",
  "enum_primitive 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "glium 0.15.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "glowygraph 0.7.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "glowygraph 0.7.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "itertools 0.4.18 (registry+https://github.com/rust-lang/crates.io-index)",
  "mli 0.7.0 (git+https://github.com/vadixidav/mli)",
  "nalgebra 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -219,7 +219,7 @@ dependencies = [
 
 [[package]]
 name = "glowygraph"
-version = "0.7.1"
+version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "glium 0.15.0 (registry+https://github.com/rust-lang/crates.io-index)",
