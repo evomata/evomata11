@@ -23,6 +23,7 @@ impl Hex {
 pub struct Grid {
     width: usize,
     height: usize,
+    reaction: [[f64; TOTAL_FLUIDS]; TOTAL_FLUIDS],
     tiles: Vec<Hex>,
 }
 
@@ -31,6 +32,25 @@ impl Grid {
         Grid {
             width: width,
             height: height,
+            reaction: {
+                let mut reaction = [[0f64; TOTAL_FLUIDS]; TOTAL_FLUIDS];
+                let mut column_sums = [0f64; TOTAL_FLUIDS];
+                // Add random values and sum the columns.
+                for row in 0..TOTAL_FLUIDS {
+                    for col in 0..TOTAL_FLUIDS {
+                        let v = rng.next_f64();
+                        reaction[row][col] = v;
+                        column_sums[col] += v;
+                    }
+                }
+                // Normalize each column.
+                for row in 0..TOTAL_FLUIDS {
+                    for col in 0..TOTAL_FLUIDS {
+                        reaction[row][col] /= column_sums[col];
+                    }
+                }
+                reaction
+            },
             tiles: (0..(width * height))
                 .map(|_| {
                     Hex {
@@ -58,7 +78,7 @@ impl Grid {
     pub fn cycle(&mut self) {
         // Reactions happen first.
         for hex in &mut self.tiles {
-            hex.solution.react();
+            hex.solution.react(&self.reaction);
         }
 
         // Then update diffusion.

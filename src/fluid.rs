@@ -18,8 +18,14 @@ impl Solution {
         }
     }
 
-    pub fn react(&mut self) {
-        // TODO: Implement.
+    pub fn react(&mut self, reaction: &[[f64; TOTAL_FLUIDS]; TOTAL_FLUIDS]) {
+        let mut fluid_next = [0u64; TOTAL_FLUIDS];
+        for col in 0..TOTAL_FLUIDS {
+            for row in 0..TOTAL_FLUIDS {
+                fluid_next[row] += (self.fluids[col] as f64 * reaction[row][col]) as u64;
+            }
+        }
+        self.fluids = fluid_next;
     }
 
     pub fn diffuse_from(&mut self, other: &Solution) {

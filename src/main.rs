@@ -26,7 +26,7 @@ const GRID_WIDTH: usize = 192 / 2;
 const GRID_HEIGHT: usize = 124 / 2;
 
 fn main() {
-    let mut rng = Isaac64Rng::from_seed(&[1, 2, 3, 4]);
+    let mut rng = Isaac64Rng::from_seed(&[1, 3, 4, 124]);
     let mut g = grid::Grid::new(GRID_WIDTH, GRID_HEIGHT, &mut rng);
     use glium::DisplayBuild;
     let display = glium::glutin::WindowBuilder::new().with_vsync().build_glium().unwrap();
