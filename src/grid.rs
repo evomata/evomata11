@@ -2,10 +2,22 @@ use super::cell::*;
 use super::fluid::*;
 use itertools::Itertools;
 use std::mem;
+use rand::{Isaac64Rng, Rng};
+
+pub const MAX_FLUID_INITIAL: u64 = 4294967296;
 
 #[derive(Default, Debug)]
 struct Hex {
-    solution: Solution,
+    pub solution: Solution,
+}
+
+impl Hex {
+    pub fn color(&self) -> [f32; 4] {
+        [self.solution.fluids[0] as f32 / MAX_FLUID_INITIAL as f32,
+         self.solution.fluids[1] as f32 / MAX_FLUID_INITIAL as f32,
+         self.solution.fluids[2] as f32 / MAX_FLUID_INITIAL as f32,
+         0.6]
+    }
 }
 
 pub struct Grid {
@@ -15,19 +27,41 @@ pub struct Grid {
 }
 
 impl Grid {
-    pub fn new(width: usize, height: usize) -> Self {
+    pub fn new(width: usize, height: usize, rng: &mut Isaac64Rng) -> Self {
         Grid {
             width: width,
             height: height,
-            tiles: (0..(width * height)).map(|_| Default::default()).collect_vec(),
+            tiles: (0..(width * height))
+                .map(|_| {
+                    Hex {
+                        solution: Solution::new({
+                            let mut def: [u64; TOTAL_FLUIDS] = Default::default();
+                            for f in &mut def {
+                                *f = rng.gen_range(0, MAX_FLUID_INITIAL);
+                            }
+                            def
+                        }),
+                    }
+                })
+                .collect_vec(),
         }
     }
 
-    fn size(&self) -> usize {
+    pub fn get_hex(&self, x: usize, y: usize) -> &Hex {
+        &self.tiles[x + y * self.width]
+    }
+
+    pub fn size(&self) -> usize {
         self.width * self.height
     }
 
     pub fn cycle(&mut self) {
+        // Reactions happen first.
+        for hex in &mut self.tiles {
+            hex.solution.react();
+        }
+
+        // Then update diffusion.
         for x in 0..self.width {
             for y in 0..self.height {
                 let mut this: &'static mut Hex =
@@ -61,6 +95,11 @@ impl Grid {
                                                        y * self.width]
                     .solution);
             }
+        }
+
+        // Reactions happen first.
+        for hex in &mut self.tiles {
+            hex.solution.diffuse_cycle();
         }
     }
 }

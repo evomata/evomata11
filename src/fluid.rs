@@ -1,8 +1,8 @@
 extern crate num;
 extern crate nalgebra as na;
 
-const TOTAL_FLUIDS: usize = 4;
-const DIFFUSION_COEFFICIENT: f64 = 0.001;
+pub const TOTAL_FLUIDS: usize = 3;
+const DIFFUSION_COEFFICIENT: f64 = 0.003;
 
 #[derive(Default, Debug)]
 pub struct Solution {
@@ -30,7 +30,9 @@ impl Solution {
 
     pub fn diffuse_cycle(&mut self) {
         for (fluid, diffuse) in self.fluids.iter_mut().zip(self.diffuse.iter_mut()) {
-            *fluid += *diffuse - (*fluid as f64 * DIFFUSION_COEFFICIENT * 6.0) as u64;
+            *fluid = (*fluid as i64 + *diffuse as i64 -
+                      (*fluid as f64 * DIFFUSION_COEFFICIENT *
+                       6.0) as i64) as u64;
             *diffuse = 0;
         }
     }
