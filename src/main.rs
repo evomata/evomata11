@@ -10,6 +10,7 @@ extern crate itertools;
 extern crate glowygraph as gg;
 extern crate glium;
 extern crate nalgebra;
+extern crate noise;
 
 mod cell;
 mod fluid;

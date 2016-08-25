@@ -2,6 +2,7 @@ use super::fluid::*;
 use itertools::Itertools;
 use std::mem;
 use rand::{Isaac64Rng, Rng};
+use noise::{Brownian2, perlin2};
 
 #[derive(Default, Debug)]
 pub struct Hex {
@@ -26,14 +27,27 @@ impl Grid {
             width: width,
             height: height,
             tiles: (0..(width * height))
-                .map(|_| Hex { solution: Solution::new([rng.next_f64(), rng.next_f64()]) })
+                .map(|_| {
+                    Hex {
+                        solution: Solution::new([rng.next_f64(), rng.next_f64()],
+                                                [4.0, 4.0],
+                                                [0.062, 0.061]),
+                    }
+                })
                 .collect_vec(),
         }
     }
 
     pub fn randomize(&mut self, rng: &mut Isaac64Rng) {
-        for hex in &mut self.tiles {
-            hex.solution = Solution::new([rng.next_f64(), rng.next_f64()]);
+        let seeds = [rng.gen(), rng.gen()];
+        let noise = Brownian2::new(perlin2, 4).wavelength(16.0);
+        for x in 0..self.width {
+            for y in 0..self.height {
+                self.hex_mut(x, y).solution =
+                    Solution::new([noise.apply(&seeds[0], &[x as f64, y as f64]), 1.0],
+                                  [4.0, 4.0],
+                                  [0.062, 0.061]);
+            }
         }
     }
 
@@ -50,26 +64,46 @@ impl Grid {
         for x in 0..self.width {
             for y in 0..self.height {
                 let mut this: &mut Hex = unsafe { mem::transmute(self.hex_mut(x, y)) };
-                // UpRight
-                this.solution
-                    .diffuse_from(&self.hex(x, (y + self.height - 1) % self.height).solution);
-                // UpLeft
-                this.solution.diffuse_from(&self.hex((x + self.width - 1) % self.width,
-                         (y + self.height - 1) % self.height)
-                    .solution);
+
                 // Left
                 this.solution.diffuse_from(&self.hex((x + self.width - 1) % self.width, y)
-                    .solution);
-                // DownLeft
-                this.solution.diffuse_from(&self.hex((x + self.width - 1) % self.width,
-                         (y + self.height + 1) % self.height)
-                    .solution);
-                // DownRight
-                this.solution.diffuse_from(&self.hex(x, (y + self.height + 1) % self.height)
                     .solution);
                 // Right
                 this.solution.diffuse_from(&self.hex((x + self.width + 1) % self.width, y)
                     .solution);
+
+                if y % 2 == 0 {
+                    // UpRight
+                    this.solution
+                        .diffuse_from(&self.hex((x + self.width + 1) % self.width,
+                                 (y + self.height - 1) % self.height)
+                            .solution);
+                    // UpLeft
+                    this.solution.diffuse_from(&self.hex(x, (y + self.height - 1) % self.height)
+                        .solution);
+                    // DownLeft
+                    this.solution.diffuse_from(&self.hex(x, (y + self.height + 1) % self.height)
+                        .solution);
+                    // DownRight
+                    this.solution.diffuse_from(&self.hex((x + self.width + 1) % self.width,
+                             (y + self.height + 1) % self.height)
+                        .solution);
+                } else {
+                    // UpRight
+                    this.solution
+                        .diffuse_from(&self.hex(x, (y + self.height - 1) % self.height).solution);
+                    // UpLeft
+                    this.solution.diffuse_from(&self.hex((x + self.width - 1) % self.width,
+                             (y + self.height - 1) % self.height)
+                        .solution);
+                    // DownLeft
+                    this.solution.diffuse_from(&self.hex((x + self.width - 1) % self.width,
+                             (y + self.height + 1) % self.height)
+                        .solution);
+                    // DownRight
+                    this.solution.diffuse_from(&self.hex(x, (y + self.height + 1) % self.height)
+                        .solution);
+                }
             }
         }
 
