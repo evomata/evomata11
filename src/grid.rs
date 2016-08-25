@@ -1,4 +1,3 @@
-use super::cell::*;
 use super::fluid::*;
 use itertools::Itertools;
 use std::mem;
@@ -11,7 +10,7 @@ pub struct Hex {
 
 impl Hex {
     pub fn color(&self) -> [f32; 4] {
-        [self.solution.fluids[0] as f32, self.solution.fluids[1] as f32, 0.0, 1.0]
+        [0.25 * self.solution.fluids[1] as f32, 0.0, 0.25 * self.solution.fluids[0] as f32, 1.0]
     }
 }
 
@@ -38,11 +37,11 @@ impl Grid {
         }
     }
 
-    pub fn get_hex(&self, x: usize, y: usize) -> &Hex {
+    pub fn hex(&self, x: usize, y: usize) -> &Hex {
         &self.tiles[x + y * self.width]
     }
 
-    pub fn get_hex_mut(&mut self, x: usize, y: usize) -> &mut Hex {
+    pub fn hex_mut(&mut self, x: usize, y: usize) -> &mut Hex {
         &mut self.tiles[x + y * self.width]
     }
 
@@ -50,26 +49,26 @@ impl Grid {
         // Then update diffusion.
         for x in 0..self.width {
             for y in 0..self.height {
-                let mut this: &mut Hex = unsafe { mem::transmute(self.get_hex_mut(x, y)) };
+                let mut this: &mut Hex = unsafe { mem::transmute(self.hex_mut(x, y)) };
                 // UpRight
                 this.solution
-                    .diffuse_from(&self.get_hex(x, (y + self.height - 1) % self.height).solution);
+                    .diffuse_from(&self.hex(x, (y + self.height - 1) % self.height).solution);
                 // UpLeft
-                this.solution.diffuse_from(&self.get_hex((x + self.width - 1) % self.width,
-                             (y + self.height - 1) % self.height)
+                this.solution.diffuse_from(&self.hex((x + self.width - 1) % self.width,
+                         (y + self.height - 1) % self.height)
                     .solution);
                 // Left
-                this.solution.diffuse_from(&self.get_hex((x + self.width - 1) % self.width, y)
+                this.solution.diffuse_from(&self.hex((x + self.width - 1) % self.width, y)
                     .solution);
                 // DownLeft
-                this.solution.diffuse_from(&self.get_hex((x + self.width - 1) % self.width,
-                             (y + self.height + 1) % self.height)
+                this.solution.diffuse_from(&self.hex((x + self.width - 1) % self.width,
+                         (y + self.height + 1) % self.height)
                     .solution);
                 // DownRight
-                this.solution.diffuse_from(&self.get_hex(x, (y + self.height + 1) % self.height)
+                this.solution.diffuse_from(&self.hex(x, (y + self.height + 1) % self.height)
                     .solution);
                 // Right
-                this.solution.diffuse_from(&self.get_hex((x + self.width + 1) % self.width, y)
+                this.solution.diffuse_from(&self.hex((x + self.width + 1) % self.width, y)
                     .solution);
             }
         }

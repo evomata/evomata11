@@ -16,14 +16,14 @@ impl Solution {
     pub fn new(fluids: [f64; TOTAL_FLUIDS]) -> Self {
         Solution {
             fluids: fluids,
-            coefficients: [0.4, 1.0],
+            coefficients: [1.8, 4.0],
             diffuse: [0.0; TOTAL_FLUIDS],
         }
     }
 
     pub fn react_deltas(&self) -> [f64; TOTAL_FLUIDS] {
-        let a = self.fluids[1];
         let b = self.fluids[0];
+        let a = self.fluids[1];
         let f = 0.062;
         let k = 0.06093;
         [a * b * b - (k + f) * b, -a * b * b + f * (1.0 - a)]

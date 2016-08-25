@@ -56,7 +56,7 @@ fn main() {
         for x in 0..GRID_WIDTH {
             for y in 0..GRID_HEIGHT {
                 append_circle(&mut qbeziers,
-                              g.get_hex(x, y).color(),
+                              g.hex(x, y).color(),
                               &na::Isometry2::new(na::Vector2::new(if y % 2 == 0 {
                                                                        1.0
                                                                    } else {
