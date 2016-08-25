@@ -9,31 +9,24 @@ const TIMESTEP: f64 = 0.2;
 pub struct Solution {
     pub fluids: [f64; TOTAL_FLUIDS],
     pub coefficients: [f64; TOTAL_FLUIDS],
-    pub reaction: [f64; 2],
     diffuse: [f64; TOTAL_FLUIDS],
 }
 
 impl Solution {
-    pub fn new(fluids: [f64; TOTAL_FLUIDS],
-               coefficients: [f64; TOTAL_FLUIDS],
-               reaction: [f64; 2])
-               -> Self {
+    pub fn new(fluids: [f64; TOTAL_FLUIDS], coefficients: [f64; TOTAL_FLUIDS]) -> Self {
         Solution {
             fluids: fluids,
             coefficients: coefficients,
-            reaction: reaction,
             diffuse: [0.0; TOTAL_FLUIDS],
         }
     }
 
     pub fn react_deltas(&self) -> [f64; TOTAL_FLUIDS] {
-        let a = self.fluids[0];
-        let b = self.fluids[1];
-        // let f = 0.062;
-        // let k = 0.06093;
-        let f = self.reaction[0];
-        let k = self.reaction[1];
-        [-a * b * b + f * (1.0 - a), a * b * b - (k + f) * b]
+        let a = self.fluids[1];
+        let b = self.fluids[0];
+        let f = 0.014;
+        let k = 0.054;
+        [a * b * b - (k + f) * b, -a * b * b + f * (1.0 - a)]
     }
 
     pub fn diffuse_from(&mut self, other: &Solution) {

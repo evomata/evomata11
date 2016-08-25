@@ -11,7 +11,11 @@ pub struct Hex {
 
 impl Hex {
     pub fn color(&self) -> [f32; 4] {
-        [0.25 * self.solution.fluids[1] as f32, 0.0, 0.25 * self.solution.fluids[0] as f32, 1.0]
+        [// 0.25 * self.solution.fluids[1] as f32
+         0.0,
+         0.0,
+         0.25 * self.solution.fluids[0] as f32,
+         1.0]
     }
 }
 
@@ -99,14 +103,13 @@ impl Grid {
 
 fn randomizing_vec(width: usize, height: usize, rng: &mut Isaac64Rng) -> Vec<Hex> {
     let seeds = [rng.gen(), rng.gen()];
-    let noise = Brownian2::new(perlin2, 4).wavelength(32.0);
+    let noise = Brownian2::new(perlin2, 4).wavelength(64.0);
     (0..height)
         .cartesian_product((0..width))
         .map(|(x, y)| {
             Hex {
-                solution: Solution::new([1.0, noise.apply(&seeds[0], &[x as f64, y as f64])],
-                                        [0.5, 0.25],
-                                        [0.062, 0.061]),
+                solution: Solution::new([noise.apply(&seeds[0], &[x as f64, y as f64]), 1.0],
+                                        [0.5, 1.0]),
             }
         })
         .collect_vec()
