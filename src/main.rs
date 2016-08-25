@@ -80,7 +80,7 @@ fn main() {
                                    projection,
                                    &qbeziers[..]);
 
-        g.cycle();
+        g.cycle(&mut rng);
 
         target.finish().unwrap();
 

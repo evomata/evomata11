@@ -16,6 +16,7 @@ enum_from_primitive! {
 
 #[derive(Clone, Debug)]
 pub enum Choice {
+    // If the mate and spawn direction are the same, cause a divide.
     Divide {
         mate: Direction,
         spawn: Direction,
@@ -43,7 +44,11 @@ impl Cell {
         Cell { delta: Delta { placeholder: 0 } }
     }
 
-    pub fn decide(&mut self, rng: &mut Isaac64Rng) -> Decision {
+    pub fn decide(&mut self,
+                  fluids: &[f64; 2],
+                  cells: &[bool; 6],
+                  rng: &mut Isaac64Rng)
+                  -> Decision {
         Decision {
             choice: Choice::Move(Direction::from_u32(rng.gen_range(0, Direction::TOTAL as u32))
                 .unwrap()),
