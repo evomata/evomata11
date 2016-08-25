@@ -43,6 +43,7 @@ fn main() {
         let mut target = display.draw();
         target.clear_color(0.0, 0.0, 0.0, 1.0);
 
+        // Ratio of width/height in a 2d circle tight-pack or a hex grid.
         let width_height_ratio = 0.86602540378;
 
         let projection = [[1.0 / (GRID_WIDTH as f32 + 1.0), 0.0, 0.0],
@@ -96,8 +97,11 @@ fn main() {
 }
 
 fn append_circle(v: &mut Vec<QBezier>, color: [f32; 4], modelview: &na::Matrix3<f32>) {
+    let radius = 0.6;
+    let circle_scale = 0.6;
     let transform = |n: [f32; 2]| {
-        let na::Vector3 { x, y, .. } = *modelview * na::Vector3::new(n[0] * 0.8, n[1] * 0.8, 1.0);
+        let na::Vector3 { x, y, .. } =
+            *modelview * na::Vector3::new(n[0] * circle_scale, n[1] * circle_scale, 1.0);
         [x, y]
     };
     v.extend([QBezier {
@@ -110,10 +114,10 @@ fn append_circle(v: &mut Vec<QBezier>, color: [f32; 4], modelview: &na::Matrix3<
                   falloff_color1: color,
                   falloff0: 0.25,
                   falloff1: 0.25,
-                  falloff_radius0: 0.1,
-                  falloff_radius1: 0.1,
-                  inner_radius0: 0.1,
-                  inner_radius1: 0.1,
+                  falloff_radius0: radius / 2.0,
+                  falloff_radius1: radius / 2.0,
+                  inner_radius0: radius / 2.0,
+                  inner_radius1: radius / 2.0,
               },
               QBezier {
                   position0: transform([0.8660254037844386, -0.5]),
@@ -125,10 +129,10 @@ fn append_circle(v: &mut Vec<QBezier>, color: [f32; 4], modelview: &na::Matrix3<
                   falloff_color1: color,
                   falloff0: 0.25,
                   falloff1: 0.25,
-                  falloff_radius0: 0.1,
-                  falloff_radius1: 0.1,
-                  inner_radius0: 0.1,
-                  inner_radius1: 0.1,
+                  falloff_radius0: radius / 2.0,
+                  falloff_radius1: radius / 2.0,
+                  inner_radius0: radius / 2.0,
+                  inner_radius1: radius / 2.0,
               },
               QBezier {
                   position0: transform([0.8660254037844387, 0.5]),
@@ -140,10 +144,10 @@ fn append_circle(v: &mut Vec<QBezier>, color: [f32; 4], modelview: &na::Matrix3<
                   falloff_color1: color,
                   falloff0: 0.25,
                   falloff1: 0.25,
-                  falloff_radius0: 0.1,
-                  falloff_radius1: 0.1,
-                  inner_radius0: 0.1,
-                  inner_radius1: 0.1,
+                  falloff_radius0: radius / 2.0,
+                  falloff_radius1: radius / 2.0,
+                  inner_radius0: radius / 2.0,
+                  inner_radius1: radius / 2.0,
               },
               QBezier {
                   position0: transform([0.0, 1.0]),
@@ -155,10 +159,10 @@ fn append_circle(v: &mut Vec<QBezier>, color: [f32; 4], modelview: &na::Matrix3<
                   falloff_color1: color,
                   falloff0: 0.25,
                   falloff1: 0.25,
-                  falloff_radius0: 0.1,
-                  falloff_radius1: 0.1,
-                  inner_radius0: 0.1,
-                  inner_radius1: 0.1,
+                  falloff_radius0: radius / 2.0,
+                  falloff_radius1: radius / 2.0,
+                  inner_radius0: radius / 2.0,
+                  inner_radius1: radius / 2.0,
               },
               QBezier {
                   position0: transform([-0.8660254037844384, 0.5]),
@@ -170,10 +174,10 @@ fn append_circle(v: &mut Vec<QBezier>, color: [f32; 4], modelview: &na::Matrix3<
                   falloff_color1: color,
                   falloff0: 0.25,
                   falloff1: 0.25,
-                  falloff_radius0: 0.1,
-                  falloff_radius1: 0.1,
-                  inner_radius0: 0.1,
-                  inner_radius1: 0.1,
+                  falloff_radius0: radius / 2.0,
+                  falloff_radius1: radius / 2.0,
+                  inner_radius0: radius / 2.0,
+                  inner_radius1: radius / 2.0,
               },
               QBezier {
                   position0: transform([-0.866025403784439, -0.5]),
@@ -185,10 +189,10 @@ fn append_circle(v: &mut Vec<QBezier>, color: [f32; 4], modelview: &na::Matrix3<
                   falloff_color1: color,
                   falloff0: 0.25,
                   falloff1: 0.25,
-                  falloff_radius0: 0.1,
-                  falloff_radius1: 0.1,
-                  inner_radius0: 0.1,
-                  inner_radius1: 0.1,
+                  falloff_radius0: radius / 2.0,
+                  falloff_radius1: radius / 2.0,
+                  inner_radius0: radius / 2.0,
+                  inner_radius1: radius / 2.0,
               }]
         .into_iter());
 }

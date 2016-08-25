@@ -16,7 +16,7 @@ impl Solution {
     pub fn new(fluids: [f64; TOTAL_FLUIDS]) -> Self {
         Solution {
             fluids: fluids,
-            coefficients: [0.5, 1.0],
+            coefficients: [0.4, 1.0],
             diffuse: [0.0; TOTAL_FLUIDS],
         }
     }
