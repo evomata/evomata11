@@ -27,13 +27,13 @@ impl Solution {
     }
 
     pub fn react_deltas(&self) -> [f64; TOTAL_FLUIDS] {
-        let b = self.fluids[0];
-        let a = self.fluids[1];
+        let a = self.fluids[0];
+        let b = self.fluids[1];
         // let f = 0.062;
         // let k = 0.06093;
         let f = self.reaction[0];
         let k = self.reaction[1];
-        [a * b * b - (k + f) * b, -a * b * b + f * (1.0 - a)]
+        [-a * b * b + f * (1.0 - a), a * b * b - (k + f) * b]
     }
 
     pub fn diffuse_from(&mut self, other: &Solution) {

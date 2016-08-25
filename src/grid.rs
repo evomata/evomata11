@@ -26,29 +26,12 @@ impl Grid {
         Grid {
             width: width,
             height: height,
-            tiles: (0..(width * height))
-                .map(|_| {
-                    Hex {
-                        solution: Solution::new([rng.next_f64(), rng.next_f64()],
-                                                [4.0, 4.0],
-                                                [0.062, 0.061]),
-                    }
-                })
-                .collect_vec(),
+            tiles: randomizing_vec(width, height, rng),
         }
     }
 
     pub fn randomize(&mut self, rng: &mut Isaac64Rng) {
-        let seeds = [rng.gen(), rng.gen()];
-        let noise = Brownian2::new(perlin2, 4).wavelength(16.0);
-        for x in 0..self.width {
-            for y in 0..self.height {
-                self.hex_mut(x, y).solution =
-                    Solution::new([noise.apply(&seeds[0], &[x as f64, y as f64]), 1.0],
-                                  [4.0, 4.0],
-                                  [0.062, 0.061]);
-            }
-        }
+        self.tiles = randomizing_vec(self.width, self.height, rng);
     }
 
     pub fn hex(&self, x: usize, y: usize) -> &Hex {
@@ -112,4 +95,19 @@ impl Grid {
             hex.solution.end_cycle();
         }
     }
+}
+
+fn randomizing_vec(width: usize, height: usize, rng: &mut Isaac64Rng) -> Vec<Hex> {
+    let seeds = [rng.gen(), rng.gen()];
+    let noise = Brownian2::new(perlin2, 4).wavelength(32.0);
+    (0..height)
+        .cartesian_product((0..width))
+        .map(|(x, y)| {
+            Hex {
+                solution: Solution::new([1.0, noise.apply(&seeds[0], &[x as f64, y as f64])],
+                                        [0.5, 0.25],
+                                        [0.062, 0.061]),
+            }
+        })
+        .collect_vec()
 }
