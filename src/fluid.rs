@@ -1,45 +1,46 @@
 extern crate num;
 extern crate nalgebra as na;
 
-pub const TOTAL_FLUIDS: usize = 3;
-const DIFFUSION_COEFFICIENT: f64 = 0.003;
+pub const TOTAL_FLUIDS: usize = 2;
+
+const TIMESTEP: f64 = 0.2;
 
 #[derive(Default, Debug)]
 pub struct Solution {
-    pub fluids: [u64; TOTAL_FLUIDS],
-    diffuse: [u64; TOTAL_FLUIDS],
+    pub fluids: [f64; TOTAL_FLUIDS],
+    pub coefficients: [f64; TOTAL_FLUIDS],
+    diffuse: [f64; TOTAL_FLUIDS],
 }
 
 impl Solution {
-    pub fn new(fluids: [u64; TOTAL_FLUIDS]) -> Self {
+    pub fn new(fluids: [f64; TOTAL_FLUIDS]) -> Self {
         Solution {
             fluids: fluids,
-            diffuse: [0; TOTAL_FLUIDS],
+            coefficients: [0.5, 1.0],
+            diffuse: [0.0; TOTAL_FLUIDS],
         }
     }
 
-    pub fn react(&mut self, reaction: &[[f64; TOTAL_FLUIDS]; TOTAL_FLUIDS]) {
-        let mut fluid_next = [0u64; TOTAL_FLUIDS];
-        for col in 0..TOTAL_FLUIDS {
-            for row in 0..TOTAL_FLUIDS {
-                fluid_next[row] += (self.fluids[col] as f64 * reaction[row][col]) as u64;
-            }
-        }
-        self.fluids = fluid_next;
+    pub fn react_deltas(&self) -> [f64; TOTAL_FLUIDS] {
+        let a = self.fluids[1];
+        let b = self.fluids[0];
+        let f = 0.062;
+        let k = 0.06093;
+        [a * b * b - (k + f) * b, -a * b * b + f * (1.0 - a)]
     }
 
     pub fn diffuse_from(&mut self, other: &Solution) {
-        for (diffuse, &fluid) in self.diffuse.iter_mut().zip(other.fluids.iter()) {
-            *diffuse += (fluid as f64 * DIFFUSION_COEFFICIENT) as u64;
+        for i in 0..TOTAL_FLUIDS {
+            self.diffuse[i] += other.fluids[i] * other.coefficients[i] / 6.0;
         }
     }
 
-    pub fn diffuse_cycle(&mut self) {
-        for (fluid, diffuse) in self.fluids.iter_mut().zip(self.diffuse.iter_mut()) {
-            *fluid = (*fluid as i64 + *diffuse as i64 -
-                      (*fluid as f64 * DIFFUSION_COEFFICIENT *
-                       6.0) as i64) as u64;
-            *diffuse = 0;
+    pub fn end_cycle(&mut self) {
+        let reacts = self.react_deltas();
+        for i in 0..TOTAL_FLUIDS {
+            self.fluids[i] += TIMESTEP *
+                              (reacts[i] + self.diffuse[i] - self.coefficients[i] * self.fluids[i]);
+            self.diffuse[i] = 0.0;
         }
     }
 }

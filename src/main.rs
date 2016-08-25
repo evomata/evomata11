@@ -22,11 +22,11 @@ use num::One;
 
 use rand::{Isaac64Rng, SeedableRng};
 
-const GRID_WIDTH: usize = 192 / 2;
-const GRID_HEIGHT: usize = 124 / 2;
+const GRID_WIDTH: usize = 192;
+const GRID_HEIGHT: usize = 124;
 
 fn main() {
-    let mut rng = Isaac64Rng::from_seed(&[1, 3, 4, 124]);
+    let mut rng = Isaac64Rng::from_seed(&[2, 5, 3, 12454]);
     let mut g = grid::Grid::new(GRID_WIDTH, GRID_HEIGHT, &mut rng);
     use glium::DisplayBuild;
     let display = glium::glutin::WindowBuilder::new().with_vsync().build_glium().unwrap();
@@ -83,8 +83,12 @@ fn main() {
         target.finish().unwrap();
 
         for ev in display.poll_events() {
+            use glium::glutin::{Event, ElementState, VirtualKeyCode as VKC};
             match ev {
-                glium::glutin::Event::Closed => return,
+                Event::Closed => return,
+                Event::KeyboardInput(ElementState::Pressed, _, Some(VKC::R)) => {
+                    g.randomize(&mut rng);
+                }
                 _ => (),
             }
         }
