@@ -42,40 +42,39 @@ impl Grid {
         &self.tiles[x + y * self.width]
     }
 
-    pub fn size(&self) -> usize {
-        self.width * self.height
+    pub fn get_hex_mut(&mut self, x: usize, y: usize) -> &mut Hex {
+        &mut self.tiles[x + y * self.width]
     }
 
     pub fn cycle(&mut self) {
         // Then update diffusion.
         for x in 0..self.width {
             for y in 0..self.height {
-                let mut this: &'static mut Hex =
-                    unsafe { mem::transmute(&mut self.tiles[x + y * self.width]) };
-                // Right
-                this.solution.diffuse_from(&self.get_hex((x + self.width + 1) % self.width, y)
-                    .solution);
-                // Left
-                this.solution.diffuse_from(&self.get_hex((x + self.width - 1) % self.width, y)
-                    .solution);
+                let mut this: &mut Hex = unsafe { mem::transmute(self.get_hex_mut(x, y)) };
                 // UpRight
                 this.solution
                     .diffuse_from(&self.get_hex(x, (y + self.height - 1) % self.height).solution);
-                // DownLeft
-                this.solution.diffuse_from(&self.get_hex((x + self.width - 1) % self.width,
-                             (y + self.height + 1) % self.height)
-                    .solution);
                 // UpLeft
                 this.solution.diffuse_from(&self.get_hex((x + self.width - 1) % self.width,
                              (y + self.height - 1) % self.height)
                     .solution);
+                // Left
+                this.solution.diffuse_from(&self.get_hex((x + self.width - 1) % self.width, y)
+                    .solution);
+                // DownLeft
+                this.solution.diffuse_from(&self.get_hex((x + self.width - 1) % self.width,
+                             (y + self.height + 1) % self.height)
+                    .solution);
                 // DownRight
                 this.solution.diffuse_from(&self.get_hex(x, (y + self.height + 1) % self.height)
+                    .solution);
+                // Right
+                this.solution.diffuse_from(&self.get_hex((x + self.width + 1) % self.width, y)
                     .solution);
             }
         }
 
-        // Finish cycle.
+        // Finish the cycle.
         for hex in &mut self.tiles {
             hex.solution.end_cycle();
         }
