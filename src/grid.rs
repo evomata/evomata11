@@ -1,12 +1,14 @@
+use super::cell::*;
 use super::fluid::*;
 use itertools::Itertools;
 use std::mem;
 use rand::{Isaac64Rng, Rng};
 use noise::{Brownian2, perlin2};
 
-#[derive(Default, Debug)]
+#[derive(Debug)]
 pub struct Hex {
     pub solution: Solution,
+    pub cell: Cell,
 }
 
 impl Hex {
@@ -110,6 +112,7 @@ fn randomizing_vec(width: usize, height: usize, rng: &mut Isaac64Rng) -> Vec<Hex
             Hex {
                 solution: Solution::new([noise.apply(&seeds[0], &[x as f64, y as f64]), 1.0],
                                         [0.5, 1.0]),
+                cell: Cell::new(),
             }
         })
         .collect_vec()
