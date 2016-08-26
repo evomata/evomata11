@@ -5,10 +5,10 @@ use std::mem;
 use rand::{Isaac64Rng, Rng};
 use noise::{Brownian2, perlin2};
 
-const SPAWN_RATE: f64 = 1.0;
-const CONSUMPTION: f64 = 0.02;
-const SURVIVAL_THRESHOLD: f64 = 0.1;
-const INHALE_CAP: usize = 100;
+const SPAWN_RATE: f64 = 0.2;
+const CONSUMPTION: f64 = 0.03;
+const SURVIVAL_THRESHOLD: f64 = 0.05;
+const INHALE_CAP: usize = 10;
 
 #[derive(Debug, Clone)]
 struct Mate {
