@@ -6,8 +6,8 @@ use rand::{Isaac64Rng, Rng};
 use noise::{Brownian2, perlin2};
 
 const SPAWN_RATE: f64 = 1.0;
-const CONSUMPTION: f64 = 0.03;
-const SURVIVAL_THRESHOLD: f64 = 0.05;
+const CONSUMPTION: f64 = 0.02;
+const SURVIVAL_THRESHOLD: f64 = 0.1;
 const INHALE_CAP: usize = 100;
 
 #[derive(Debug, Clone)]
@@ -219,7 +219,7 @@ impl Grid {
                     // Handle mating.
                 } else if self.hex(x, y).delta.mate_attempts.len() == 1 {
                     let mate = self.hex(x, y).delta.mate_attempts[0].clone();
-                    self.hex_mut(x, y).cell = if mate.source == (x, y) {
+                    self.hex_mut(x, y).cell = if mate.mate == (x, y) {
                         Some(self.hex(mate.source.0, mate.source.1)
                             .cell
                             .as_ref()
