@@ -25,8 +25,8 @@ impl Solution {
     pub fn react_deltas(&self) -> [f64; TOTAL_FLUIDS] {
         let a = self.fluids[1];
         let b = self.fluids[0];
-        let f = 0.022;
-        let k = 0.051;
+        let f = 0.062;
+        let k = 0.061;
         [a * b * b - (k + f) * b, -a * b * b + f * (1.0 - a)]
     }
 
