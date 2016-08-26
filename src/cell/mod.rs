@@ -1,6 +1,6 @@
 mod brain;
 
-use rand::Isaac64Rng;
+use rand::{Isaac64Rng, Rng};
 
 use mli::SISO;
 
@@ -90,18 +90,22 @@ pub struct Decision {
 #[derive(Clone)]
 pub struct Cell {
     pub brain: brain::Brain,
+    turn: usize,
 }
 
 impl Cell {
     pub fn new(rng: &mut Isaac64Rng) -> Self {
-        Cell { brain: brain::Brain::new(rng) }
+        Cell {
+            brain: brain::Brain::new(rng),
+            turn: rng.gen_range(0, 6),
+        }
     }
 
     pub fn color(&self) -> [f32; 4] {
         [1.0, 1.0, 1.0, 1.0]
     }
 
-    pub fn decide(&mut self, fluids: [&[f64; 2]; 7], cells: &[bool; 6]) -> Decision {
+    pub fn decide(&mut self, fluids: [&[f64; TOTAL_FLUIDS]; 7], cells: &[bool; 6]) -> Decision {
         use std::f64::{MAX, MIN};
         let nc = |n: bool| if n {
             1.0
@@ -117,24 +121,24 @@ impl Cell {
                       MIN,
                       fluids[0][0],
                       fluids[0][1],
-                      fluids[1][0],
-                      fluids[1][1],
-                      fluids[2][0],
-                      fluids[2][1],
-                      fluids[3][0],
-                      fluids[3][1],
-                      fluids[4][0],
-                      fluids[4][1],
-                      fluids[5][0],
-                      fluids[5][1],
-                      fluids[6][0],
-                      fluids[6][1],
-                      nc(cells[0]),
-                      nc(cells[1]),
-                      nc(cells[2]),
-                      nc(cells[3]),
-                      nc(cells[4]),
-                      nc(cells[5]),
+                      fluids[(0 + self.turn) % 6 + 1][0],
+                      fluids[(0 + self.turn) % 6 + 1][1],
+                      fluids[(1 + self.turn) % 6 + 1][0],
+                      fluids[(1 + self.turn) % 6 + 1][1],
+                      fluids[(2 + self.turn) % 6 + 1][0],
+                      fluids[(2 + self.turn) % 6 + 1][1],
+                      fluids[(3 + self.turn) % 6 + 1][0],
+                      fluids[(3 + self.turn) % 6 + 1][1],
+                      fluids[(4 + self.turn) % 6 + 1][0],
+                      fluids[(4 + self.turn) % 6 + 1][1],
+                      fluids[(5 + self.turn) % 6 + 1][0],
+                      fluids[(5 + self.turn) % 6 + 1][1],
+                      nc(cells[(0 + self.turn) % 6]),
+                      nc(cells[(1 + self.turn) % 6]),
+                      nc(cells[(2 + self.turn) % 6]),
+                      nc(cells[(3 + self.turn) % 6]),
+                      nc(cells[(4 + self.turn) % 6]),
+                      nc(cells[(5 + self.turn) % 6]),
                       self.brain.memory[0],
                       self.brain.memory[1],
                       self.brain.memory[2],
@@ -165,6 +169,26 @@ impl Cell {
 
         let divide_attempt = compute.next().unwrap();
 
+        let turn_directions = [compute.next().unwrap(),
+                               compute.next().unwrap(),
+                               compute.next().unwrap(),
+                               compute.next().unwrap(),
+                               compute.next().unwrap(),
+                               compute.next().unwrap()];
+
+        // Handle turn immediately so they can turn to stimuli.
+        if let Some(dir) = turn_directions.iter()
+            .cloned()
+            .enumerate()
+            .fold((None, 0.0), |best, n| if n.1 > best.1 {
+                (Some(n.0), n.1)
+            } else {
+                best
+            })
+            .0 {
+            self.turn = dir;
+        }
+
         self.brain.memory.iter_mut().set_from(compute);
         Decision {
             choice: match [move_attempt, divide_attempt, mate_attempt]
@@ -178,16 +202,23 @@ impl Cell {
                 })
                 .0 {
                 Some(0) => {
-                    Choice::Move(move_directions[1..]
+                    Choice::Move(move_directions[..]
                         .iter()
+                        .cycle()
+                        .skip(1 + self.turn)
+                        .take(5)
                         .cloned()
-                        .zip(&[Direction::UpRight,
-                               Direction::UpLeft,
-                               Direction::Left,
-                               Direction::DownLeft,
-                               Direction::DownRight,
-                               Direction::Right])
-                        .fold((move_directions[0], Direction::UpRight),
+                        .zip([Direction::UpRight,
+                              Direction::UpLeft,
+                              Direction::Left,
+                              Direction::DownLeft,
+                              Direction::DownRight,
+                              Direction::Right]
+                            .iter()
+                            .cycle()
+                            .skip(self.turn)
+                            .take(6))
+                        .fold((move_directions[self.turn], Direction::UpRight),
                               |(bestval, bestdir), (val, &dir)| if val > bestval {
                                   (val, dir)
                               } else {
@@ -196,16 +227,23 @@ impl Cell {
                         .1)
                 }
                 Some(1) => {
-                    let direction = spawn_directions[1..]
+                    let direction = spawn_directions[..]
                         .iter()
+                        .cycle()
+                        .skip(1 + self.turn)
+                        .take(5)
                         .cloned()
-                        .zip(&[Direction::UpRight,
-                               Direction::UpLeft,
-                               Direction::Left,
-                               Direction::DownLeft,
-                               Direction::DownRight,
-                               Direction::Right])
-                        .fold((spawn_directions[0], Direction::UpRight),
+                        .zip([Direction::UpRight,
+                              Direction::UpLeft,
+                              Direction::Left,
+                              Direction::DownLeft,
+                              Direction::DownRight,
+                              Direction::Right]
+                            .iter()
+                            .cycle()
+                            .skip(self.turn)
+                            .take(6))
+                        .fold((spawn_directions[self.turn], Direction::UpRight),
                               |(bestval, bestdir), (val, &dir)| if val > bestval {
                                   (val, dir)
                               } else {
@@ -219,32 +257,46 @@ impl Cell {
                 }
                 Some(2) => {
                     Choice::Divide {
-                        mate: mate_directions[1..]
+                        mate: mate_directions[..]
                             .iter()
+                            .cycle()
+                            .skip(1 + self.turn)
+                            .take(5)
                             .cloned()
-                            .zip(&[Direction::UpRight,
-                                   Direction::UpLeft,
-                                   Direction::Left,
-                                   Direction::DownLeft,
-                                   Direction::DownRight,
-                                   Direction::Right])
-                            .fold((mate_directions[0], Direction::UpRight),
+                            .zip([Direction::UpRight,
+                                  Direction::UpLeft,
+                                  Direction::Left,
+                                  Direction::DownLeft,
+                                  Direction::DownRight,
+                                  Direction::Right]
+                                .iter()
+                                .cycle()
+                                .skip(self.turn)
+                                .take(6))
+                            .fold((mate_directions[self.turn], Direction::UpRight),
                                   |(bestval, bestdir), (val, &dir)| if val > bestval {
                                       (val, dir)
                                   } else {
                                       (bestval, bestdir)
                                   })
                             .1,
-                        spawn: spawn_directions[1..]
+                        spawn: spawn_directions[..]
                             .iter()
+                            .cycle()
+                            .skip(1 + self.turn)
+                            .take(5)
                             .cloned()
-                            .zip(&[Direction::UpRight,
-                                   Direction::UpLeft,
-                                   Direction::Left,
-                                   Direction::DownLeft,
-                                   Direction::DownRight,
-                                   Direction::Right])
-                            .fold((spawn_directions[0], Direction::UpRight),
+                            .zip([Direction::UpRight,
+                                  Direction::UpLeft,
+                                  Direction::Left,
+                                  Direction::DownLeft,
+                                  Direction::DownRight,
+                                  Direction::Right]
+                                .iter()
+                                .cycle()
+                                .skip(self.turn)
+                                .take(6))
+                            .fold((spawn_directions[self.turn], Direction::UpRight),
                                   |(bestval, bestdir), (val, &dir)| if val > bestval {
                                       (val, dir)
                                   } else {
@@ -271,7 +323,17 @@ impl Cell {
     }
 
     pub fn mate(&self, other: &Cell, rng: &mut Isaac64Rng) -> Cell {
-        Cell { brain: self.brain.mate(&other.brain, rng) }
+        Cell {
+            brain: self.brain.mate(&other.brain, rng),
+            turn: self.turn,
+        }
+    }
+
+    pub fn divide(&self, rng: &mut Isaac64Rng) -> Cell {
+        Cell {
+            brain: self.brain.divide(rng),
+            turn: self.turn,
+        }
     }
 }
 

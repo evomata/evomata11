@@ -114,6 +114,9 @@ fn main() {
                 Event::KeyboardInput(ElementState::Pressed, _, Some(VKC::R)) => {
                     g.randomize(&mut rng);
                 }
+                Event::KeyboardInput(ElementState::Pressed, _, Some(VKC::S)) => {
+                    g.spawning = !g.spawning;
+                }
                 _ => (),
             }
         }

@@ -6,7 +6,7 @@ use rand::{Isaac64Rng, Rng};
 use noise::{Brownian2, perlin2};
 
 const SPAWN_RATE: f64 = 1.0;
-const CONSUMPTION: f64 = 0.0;
+const CONSUMPTION: f64 = 0.01;
 const SURVIVAL_THRESHOLD: f64 = 0.1;
 
 #[derive(Debug, Clone)]
@@ -35,14 +35,16 @@ impl Hex {
 }
 
 pub struct Grid {
-    width: usize,
-    height: usize,
+    pub spawning: bool,
+    pub width: usize,
+    pub height: usize,
     tiles: Vec<Hex>,
 }
 
 impl Grid {
     pub fn new(width: usize, height: usize, rng: &mut Isaac64Rng) -> Self {
         Grid {
+            spawning: true,
             width: width,
             height: height,
             tiles: randomizing_vec(width, height, rng),
@@ -97,7 +99,9 @@ impl Grid {
     }
 
     pub fn cycle(&mut self, rng: &mut Isaac64Rng) {
-        self.cycle_spawn(rng);
+        if self.spawning {
+            self.cycle_spawn(rng);
+        }
         self.cycle_cells();
         self.cycle_decisions(rng);
         self.cycle_fluids();
@@ -215,14 +219,11 @@ impl Grid {
                 } else if self.hex(x, y).delta.mate_attempts.len() == 1 {
                     let mate = self.hex(x, y).delta.mate_attempts[0].clone();
                     self.hex_mut(x, y).cell = if mate.source == (x, y) {
-                        Some(Cell {
-                            brain: self.hex(mate.source.0, mate.source.1)
-                                .cell
-                                .as_ref()
-                                .unwrap()
-                                .brain
-                                .divide(rng),
-                        })
+                        Some(self.hex(mate.source.0, mate.source.1)
+                            .cell
+                            .as_ref()
+                            .unwrap()
+                            .divide(rng))
                     } else {
                         if self.hex(mate.mate.0, mate.mate.1).cell.is_some() {
                             Some(self.hex(mate.source.0, mate.source.1)
