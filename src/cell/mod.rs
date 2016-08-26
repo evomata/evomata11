@@ -78,6 +78,7 @@ pub enum Choice {
         spawn: Direction,
     },
     Move(Direction),
+    Nothing,
 }
 
 #[derive(Clone, Debug)]
@@ -162,83 +163,61 @@ impl Cell {
                                 compute.next().unwrap(),
                                 compute.next().unwrap()];
 
+        let divide_attempt = compute.next().unwrap();
+
         self.brain.memory.iter_mut().set_from(compute);
         Decision {
-            choice: {
-                if move_attempt >= 1.0 {
-                    if mate_attempt >= 1.0 {
-                        if mate_attempt > move_attempt {
-                            Choice::Divide {
-                                mate: mate_directions[1..]
-                                    .iter()
-                                    .cloned()
-                                    .zip(&[Direction::UpRight,
-                                           Direction::UpLeft,
-                                           Direction::Left,
-                                           Direction::DownLeft,
-                                           Direction::DownRight,
-                                           Direction::Right])
-                                    .fold((mate_directions[0], Direction::UpRight),
-                                          |(bestval, bestdir), (val, &dir)| if val > bestval {
-                                              (val, dir)
-                                          } else {
-                                              (bestval, bestdir)
-                                          })
-                                    .1,
-                                spawn: spawn_directions[1..]
-                                    .iter()
-                                    .cloned()
-                                    .zip(&[Direction::UpRight,
-                                           Direction::UpLeft,
-                                           Direction::Left,
-                                           Direction::DownLeft,
-                                           Direction::DownRight,
-                                           Direction::Right])
-                                    .fold((spawn_directions[0], Direction::UpRight),
-                                          |(bestval, bestdir), (val, &dir)| if val > bestval {
-                                              (val, dir)
-                                          } else {
-                                              (bestval, bestdir)
-                                          })
-                                    .1,
-                            }
-                        } else {
-                            Choice::Move(move_directions[1..]
-                                .iter()
-                                .cloned()
-                                .zip(&[Direction::UpRight,
-                                       Direction::UpLeft,
-                                       Direction::Left,
-                                       Direction::DownLeft,
-                                       Direction::DownRight,
-                                       Direction::Right])
-                                .fold((move_directions[0], Direction::UpRight),
-                                      |(bestval, bestdir), (val, &dir)| if val > bestval {
-                                          (val, dir)
-                                      } else {
-                                          (bestval, bestdir)
-                                      })
-                                .1)
-                        }
-                    } else {
-                        Choice::Move(move_directions[1..]
-                            .iter()
-                            .cloned()
-                            .zip(&[Direction::UpRight,
-                                   Direction::UpLeft,
-                                   Direction::Left,
-                                   Direction::DownLeft,
-                                   Direction::DownRight,
-                                   Direction::Right])
-                            .fold((move_directions[0], Direction::UpRight),
-                                  |(bestval, bestdir), (val, &dir)| if val > bestval {
-                                      (val, dir)
-                                  } else {
-                                      (bestval, bestdir)
-                                  })
-                            .1)
-                    }
+            choice: match [move_attempt, divide_attempt, mate_attempt]
+                .iter()
+                .cloned()
+                .enumerate()
+                .fold((None, 0.0), |best, n| if n.1 > best.1 {
+                    (Some(n.0), n.1)
                 } else {
+                    best
+                })
+                .0 {
+                Some(0) => {
+                    Choice::Move(move_directions[1..]
+                        .iter()
+                        .cloned()
+                        .zip(&[Direction::UpRight,
+                               Direction::UpLeft,
+                               Direction::Left,
+                               Direction::DownLeft,
+                               Direction::DownRight,
+                               Direction::Right])
+                        .fold((move_directions[0], Direction::UpRight),
+                              |(bestval, bestdir), (val, &dir)| if val > bestval {
+                                  (val, dir)
+                              } else {
+                                  (bestval, bestdir)
+                              })
+                        .1)
+                }
+                Some(1) => {
+                    let direction = spawn_directions[1..]
+                        .iter()
+                        .cloned()
+                        .zip(&[Direction::UpRight,
+                               Direction::UpLeft,
+                               Direction::Left,
+                               Direction::DownLeft,
+                               Direction::DownRight,
+                               Direction::Right])
+                        .fold((spawn_directions[0], Direction::UpRight),
+                              |(bestval, bestdir), (val, &dir)| if val > bestval {
+                                  (val, dir)
+                              } else {
+                                  (bestval, bestdir)
+                              })
+                        .1;
+                    Choice::Divide {
+                        mate: direction,
+                        spawn: direction,
+                    }
+                }
+                Some(2) => {
                     Choice::Divide {
                         mate: mate_directions[1..]
                             .iter()
@@ -274,6 +253,7 @@ impl Cell {
                             .1,
                     }
                 }
+                _ => Choice::Nothing,
             },
             coefficients: {
                 let mut ncoef = [0.0; TOTAL_FLUIDS];
