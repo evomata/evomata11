@@ -10,6 +10,8 @@ const CONSUMPTION: f64 = 0.002;
 const SURVIVAL_THRESHOLD: f64 = 0.1;
 const INHALE_CAP: usize = 20;
 
+const FLUID_CYCLES: usize = 6;
+
 #[derive(Debug, Clone)]
 struct Mate {
     mate: (usize, usize),
@@ -105,7 +107,9 @@ impl Grid {
         }
         self.cycle_cells();
         self.cycle_decisions(rng);
-        self.cycle_fluids();
+        for _ in 0..FLUID_CYCLES {
+            self.cycle_fluids();
+        }
         self.cycle_death();
     }
 
