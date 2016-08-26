@@ -2,7 +2,7 @@ use rand::{Rng, Isaac64Rng};
 use num::FromPrimitive;
 
 enum_from_primitive! {
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     pub enum Direction {
         UpRight,
         UpLeft,
@@ -10,7 +10,44 @@ enum_from_primitive! {
         DownLeft,
         DownRight,
         Right,
-        TOTAL,
+    }
+}
+
+impl Direction {
+    pub fn delta(&self, even_y: bool) -> (isize, isize) {
+        use self::Direction::*;
+        match *self {
+            UpRight => {
+                if even_y {
+                    (1, -1)
+                } else {
+                    (0, -1)
+                }
+            }
+            UpLeft => {
+                if even_y {
+                    (0, -1)
+                } else {
+                    (-1, -1)
+                }
+            }
+            Left => (-1, 0),
+            DownLeft => {
+                if even_y {
+                    (0, 1)
+                } else {
+                    (-1, 1)
+                }
+            }
+            DownRight => {
+                if even_y {
+                    (1, 1)
+                } else {
+                    (0, 1)
+                }
+            }
+            Right => (1, 0),
+        }
     }
 }
 
@@ -27,21 +64,17 @@ pub enum Choice {
 #[derive(Clone, Debug)]
 pub struct Decision {
     pub choice: Choice,
-}
-
-#[derive(Clone, Debug)]
-pub struct Delta {
-    placeholder: i32,
+    pub coefficients: [f64; 2],
 }
 
 #[derive(Clone, Debug)]
 pub struct Cell {
-    delta: Delta,
+    placeholder: usize,
 }
 
 impl Cell {
     pub fn new() -> Self {
-        Cell { delta: Delta { placeholder: 0 } }
+        Cell { placeholder: 0 }
     }
 
     pub fn decide(&mut self,
@@ -50,8 +83,8 @@ impl Cell {
                   rng: &mut Isaac64Rng)
                   -> Decision {
         Decision {
-            choice: Choice::Move(Direction::from_u32(rng.gen_range(0, Direction::TOTAL as u32))
-                .unwrap()),
+            choice: Choice::Move(Direction::Right),
+            coefficients: [0.5, 1.0],
         }
     }
 

@@ -6,19 +6,21 @@ use rand::{Isaac64Rng, Rng};
 use noise::{Brownian2, perlin2};
 
 #[derive(Debug)]
+struct Delta {
+    movement_attempts: Vec<(usize, usize)>,
+}
+
+#[derive(Debug)]
 pub struct Hex {
     pub solution: Solution,
     pub cell: Option<Cell>,
     pub decision: Option<Decision>,
+    delta: Delta,
 }
 
 impl Hex {
     pub fn color(&self) -> [f32; 4] {
-        [// 0.25 * self.solution.fluids[1] as f32
-         0.0,
-         0.0,
-         0.25 * self.solution.fluids[0] as f32,
-         1.0]
+        [0.25 * self.solution.fluids[1] as f32, 0.0, 0.25 * self.solution.fluids[0] as f32, 1.0]
     }
 }
 
@@ -109,6 +111,40 @@ impl Grid {
         }
     }
 
+    fn cycle_decisions(&mut self) {
+        // Compute the deltas resulting from the decision.
+        for x in 0..self.width {
+            for y in 0..self.height {
+                let (width, height) = (self.width, self.height);
+                let (this, neighbors) = self.hex_and_neighbors(x, y);
+                // Clear the movements from the previous cycle.
+                this.delta.movement_attempts.clear();
+                this.solution.fluids = if let Some(ref decision) = this.decision {
+                    decision.coefficients
+                } else {
+                    // Set the diffusion coefficients to the normal values.
+                    [0.5, 1.0]
+                };
+                // Add any neighbor movements to the movement_attempts vector.
+                for (n, &facing) in neighbors.iter().zip(&[Direction::DownLeft,
+                                                           Direction::DownRight,
+                                                           Direction::Right,
+                                                           Direction::UpRight,
+                                                           Direction::UpLeft,
+                                                           Direction::Left]) {
+                    if let Some(Decision { choice: Choice::Move(direction), .. }) = n.decision {
+                        // It attempted to move into this hex cell.
+                        if facing == direction {
+                            this.delta
+                                .movement_attempts
+                                .push(in_direction(x, y, width, height, direction));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     fn cycle_fluids(&mut self) {
         // Then update diffusion.
         for x in 0..self.width {
@@ -139,7 +175,18 @@ fn randomizing_vec(width: usize, height: usize, rng: &mut Isaac64Rng) -> Vec<Hex
                                         [0.5, 1.0]),
                 cell: None,
                 decision: None,
+                delta: Delta { movement_attempts: Vec::with_capacity(6) },
             }
         })
         .collect_vec()
+}
+
+fn in_direction(x: usize,
+                y: usize,
+                width: usize,
+                height: usize,
+                direction: Direction)
+                -> (usize, usize) {
+    let diff = direction.delta(y % 2 == 0);
+    (((width + x) as isize + diff.0) as usize, ((height + y) as isize + diff.1) as usize)
 }
