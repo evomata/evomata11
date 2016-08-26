@@ -89,6 +89,7 @@ pub struct Decision {
 
 #[derive(Clone)]
 pub struct Cell {
+    pub inhale: usize,
     pub brain: brain::Brain,
     turn: usize,
 }
@@ -96,6 +97,7 @@ pub struct Cell {
 impl Cell {
     pub fn new(rng: &mut Isaac64Rng) -> Self {
         Cell {
+            inhale: 0,
             brain: brain::Brain::new(rng),
             turn: rng.gen_range(0, 6),
         }
@@ -312,7 +314,7 @@ impl Cell {
                 for i in 0..TOTAL_FLUIDS {
                     let f = coefficients[i];
                     ncoef[i] = if f.is_normal() {
-                        NORMAL_DIFFUSION[i] * (sig(f) * 0.8 + 1.0)
+                        NORMAL_DIFFUSION[i] * (sig(f) * 0.5 + 1.0)
                     } else {
                         NORMAL_DIFFUSION[i]
                     };
@@ -324,6 +326,7 @@ impl Cell {
 
     pub fn mate(&self, other: &Cell, rng: &mut Isaac64Rng) -> Cell {
         Cell {
+            inhale: 0,
             brain: self.brain.mate(&other.brain, rng),
             turn: self.turn,
         }
@@ -331,6 +334,7 @@ impl Cell {
 
     pub fn divide(&self, rng: &mut Isaac64Rng) -> Cell {
         Cell {
+            inhale: 0,
             brain: self.brain.divide(rng),
             turn: self.turn,
         }

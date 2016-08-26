@@ -7,7 +7,8 @@ use noise::{Brownian2, perlin2};
 
 const SPAWN_RATE: f64 = 1.0;
 const CONSUMPTION: f64 = 0.01;
-const SURVIVAL_THRESHOLD: f64 = 0.1;
+const SURVIVAL_THRESHOLD: f64 = 0.05;
+const INHALE_CAP: usize = 100;
 
 #[derive(Debug, Clone)]
 struct Mate {
@@ -270,11 +271,23 @@ impl Grid {
         for hex in &mut self.tiles {
             if hex.cell.is_some() {
                 if hex.solution.fluids[0] <= CONSUMPTION {
-                    hex.cell = None;
+                    if hex.cell.as_ref().unwrap().inhale != 0 {
+                        hex.cell.as_mut().unwrap().inhale -= 1;
+                    } else {
+                        hex.cell = None;
+                    }
                 } else {
                     hex.solution.fluids[0] -= CONSUMPTION;
                     if hex.solution.fluids[0] < SURVIVAL_THRESHOLD {
-                        hex.cell = None;
+                        if hex.cell.as_ref().unwrap().inhale != 0 {
+                            hex.cell.as_mut().unwrap().inhale -= 1;
+                        } else {
+                            hex.cell = None;
+                        }
+                    } else {
+                        if hex.cell.as_ref().unwrap().inhale < INHALE_CAP {
+                            hex.cell.as_mut().unwrap().inhale += 1;
+                        }
                     }
                 }
             }
