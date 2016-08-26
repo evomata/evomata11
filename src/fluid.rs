@@ -2,6 +2,7 @@ extern crate num;
 extern crate nalgebra as na;
 
 pub const TOTAL_FLUIDS: usize = 2;
+pub const NORMAL_DIFFUSION: [f64; 2] = [0.5, 1.0];
 
 const TIMESTEP: f64 = 0.2;
 

@@ -5,14 +5,22 @@ use std::mem;
 use rand::{Isaac64Rng, Rng};
 use noise::{Brownian2, perlin2};
 
-const SPAWN_RATE: f64 = 0.01;
+const SPAWN_RATE: f64 = 1.0;
+const CONSUMPTION: f64 = 0.0;
+const SURVIVAL_THRESHOLD: f64 = 0.1;
+
+#[derive(Debug, Clone)]
+struct Mate {
+    mate: (usize, usize),
+    source: (usize, usize),
+}
 
 #[derive(Debug)]
 struct Delta {
     movement_attempts: Vec<(usize, usize)>,
+    mate_attempts: Vec<Mate>,
 }
 
-#[derive(Debug)]
 pub struct Hex {
     pub solution: Solution,
     pub cell: Option<Cell>,
@@ -90,18 +98,19 @@ impl Grid {
 
     pub fn cycle(&mut self, rng: &mut Isaac64Rng) {
         self.cycle_spawn(rng);
-        self.cycle_cells(rng);
-        self.cycle_decisions();
+        self.cycle_cells();
+        self.cycle_decisions(rng);
         self.cycle_fluids();
+        self.cycle_death();
     }
 
     fn cycle_spawn(&mut self, rng: &mut Isaac64Rng) {
         if rng.next_f64() < SPAWN_RATE {
-            self.tiles[rng.gen_range(0, self.width * self.height)].cell = Some(Cell::new());
+            self.tiles[rng.gen_range(0, self.width * self.height)].cell = Some(Cell::new(rng));
         }
     }
 
-    fn cycle_cells(&mut self, rng: &mut Isaac64Rng) {
+    fn cycle_cells(&mut self) {
         for x in 0..self.width {
             for y in 0..self.height {
                 let (this, neighbors) = self.hex_and_neighbors(x, y);
@@ -113,7 +122,14 @@ impl Grid {
                                              neighbors[4].cell.is_some(),
                                              neighbors[5].cell.is_some()];
 
-                    Some(this_cell.decide(&this.solution.fluids, &neighbor_presents, rng))
+                    Some(this_cell.decide([&this.solution.fluids,
+                                           &neighbors[0].solution.fluids,
+                                           &neighbors[1].solution.fluids,
+                                           &neighbors[2].solution.fluids,
+                                           &neighbors[3].solution.fluids,
+                                           &neighbors[4].solution.fluids,
+                                           &neighbors[5].solution.fluids],
+                                          &neighbor_presents))
                 } else {
                     None
                 }
@@ -121,7 +137,7 @@ impl Grid {
         }
     }
 
-    fn cycle_decisions(&mut self) {
+    fn cycle_decisions(&mut self, rng: &mut Isaac64Rng) {
         // Compute the deltas resulting from the decision.
         for x in 0..self.width {
             for y in 0..self.height {
@@ -129,6 +145,7 @@ impl Grid {
                 let (this, neighbors) = self.hex_and_neighbors(x, y);
                 // Clear the movements from the previous cycle.
                 this.delta.movement_attempts.clear();
+                this.delta.mate_attempts.clear();
                 this.solution.coefficients = if let Some(ref decision) = this.decision {
                     decision.coefficients
                 } else {
@@ -145,18 +162,42 @@ impl Grid {
                                                                Direction::UpRight,
                                                                Direction::UpLeft,
                                                                Direction::Left]) {
-                        if let Some(Decision { choice: Choice::Move(direction), .. }) = n.decision {
-                            // It attempted to move into this hex cell.
-                            if facing == direction {
-                                this.delta
-                                    .movement_attempts
-                                    .push(in_direction(x, y, width, height, direction));
+                        match n.decision {
+                            Some(Decision { choice: Choice::Move(direction), .. }) => {
+                                // It attempted to move into this hex cell.
+                                if facing == direction {
+                                    this.delta
+                                        .movement_attempts
+                                        .push(in_direction(x, y, width, height, facing.flip()));
 
-                                // No need to continue if we reach 2 attempts.
-                                if this.delta.movement_attempts.len() == 2 {
-                                    break;
+                                    // No need to continue if we reach 2 attempts.
+                                    if this.delta.movement_attempts.len() == 2 {
+                                        break;
+                                    }
                                 }
                             }
+                            Some(Decision { choice: Choice::Divide { mate, spawn }, .. }) => {
+                                // It attempted to spawn into this hex cell.
+                                if facing == spawn {
+                                    let source = in_direction(x, y, width, height, facing.flip());;
+                                    this.delta
+                                        .mate_attempts
+                                        .push(Mate {
+                                            mate: in_direction(source.0,
+                                                               source.1,
+                                                               width,
+                                                               height,
+                                                               mate),
+                                            source: source,
+                                        });
+
+                                    // No need to continue if we reach 2 attempts.
+                                    if this.delta.mate_attempts.len() == 2 {
+                                        break;
+                                    }
+                                }
+                            }
+                            None => {}
                         }
                     }
                 }
@@ -170,6 +211,33 @@ impl Grid {
                 if self.hex(x, y).delta.movement_attempts.len() == 1 {
                     let from_coord = self.hex(x, y).delta.movement_attempts[0];
                     self.hex_mut(x, y).cell = self.hex_mut(from_coord.0, from_coord.1).cell.take();
+                    // Handle mating.
+                } else if self.hex(x, y).delta.mate_attempts.len() == 1 {
+                    let mate = self.hex(x, y).delta.mate_attempts[0].clone();
+                    self.hex_mut(x, y).cell = if mate.source == (x, y) {
+                        Some(Cell {
+                            brain: self.hex(mate.source.0, mate.source.1)
+                                .cell
+                                .as_ref()
+                                .unwrap()
+                                .brain
+                                .divide(rng),
+                        })
+                    } else {
+                        if self.hex(mate.mate.0, mate.mate.1).cell.is_some() {
+                            Some(self.hex(mate.source.0, mate.source.1)
+                                .cell
+                                .as_ref()
+                                .unwrap()
+                                .mate(&self.hex(mate.mate.0, mate.mate.1)
+                                          .cell
+                                          .as_ref()
+                                          .unwrap(),
+                                      rng))
+                        } else {
+                            None
+                        }
+                    };
                 }
 
                 // Clear the decisions.
@@ -195,6 +263,22 @@ impl Grid {
             hex.solution.end_cycle();
         }
     }
+
+    fn cycle_death(&mut self) {
+        // Finish the cycle.
+        for hex in &mut self.tiles {
+            if hex.cell.is_some() {
+                if hex.solution.fluids[0] <= CONSUMPTION {
+                    hex.cell = None;
+                } else {
+                    hex.solution.fluids[0] -= CONSUMPTION;
+                    if hex.solution.fluids[0] < SURVIVAL_THRESHOLD {
+                        hex.cell = None;
+                    }
+                }
+            }
+        }
+    }
 }
 
 fn randomizing_vec(width: usize, height: usize, rng: &mut Isaac64Rng) -> Vec<Hex> {
@@ -208,7 +292,10 @@ fn randomizing_vec(width: usize, height: usize, rng: &mut Isaac64Rng) -> Vec<Hex
                                         [0.5, 1.0]),
                 cell: None,
                 decision: None,
-                delta: Delta { movement_attempts: Vec::with_capacity(6) },
+                delta: Delta {
+                    movement_attempts: Vec::with_capacity(6),
+                    mate_attempts: Vec::with_capacity(6),
+                },
             }
         })
         .collect_vec()

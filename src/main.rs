@@ -11,6 +11,7 @@ extern crate glowygraph as gg;
 extern crate glium;
 extern crate nalgebra;
 extern crate noise;
+extern crate mli;
 
 mod cell;
 mod fluid;
