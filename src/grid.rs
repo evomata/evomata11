@@ -111,7 +111,10 @@ impl Grid {
 
     fn cycle_spawn(&mut self, rng: &mut Isaac64Rng) {
         if rng.next_f64() < SPAWN_RATE {
-            self.tiles[rng.gen_range(0, self.width * self.height)].cell = Some(Cell::new(rng));
+            let tile = rng.gen_range(0, self.width * self.height);
+            if self.tiles[tile].cell.is_none() {
+                self.tiles[tile].cell = Some(Cell::new(rng));
+            }
         }
     }
 
