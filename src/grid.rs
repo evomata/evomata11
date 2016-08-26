@@ -283,7 +283,7 @@ impl Grid {
 
 fn randomizing_vec(width: usize, height: usize, rng: &mut Isaac64Rng) -> Vec<Hex> {
     let seeds = [rng.gen(), rng.gen()];
-    let noise = Brownian2::new(perlin2, 4).wavelength(64.0);
+    let noise = Brownian2::new(perlin2, 4).wavelength(32.0);
     (0..height)
         .cartesian_product((0..width))
         .map(|(x, y)| {

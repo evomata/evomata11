@@ -260,7 +260,7 @@ impl Cell {
                 for i in 0..TOTAL_FLUIDS {
                     let f = coefficients[i];
                     ncoef[i] = if f.is_normal() {
-                        NORMAL_DIFFUSION[i] * (sig(f) * 0.5 + 1.0)
+                        NORMAL_DIFFUSION[i] * (sig(f) * 0.8 + 1.0)
                     } else {
                         NORMAL_DIFFUSION[i]
                     };
@@ -275,7 +275,7 @@ impl Cell {
     }
 }
 
-/// In the range [0.0, 1.0).
+/// In the range (-1.0, 1.0).
 fn sig(v: f64) -> f64 {
-    1.0 / (1.0 + (-v).exp())
+    2.0 / (1.0 + (-v).exp()) - 1.0
 }
