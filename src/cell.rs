@@ -77,6 +77,10 @@ impl Cell {
         Cell { placeholder: 0 }
     }
 
+    pub fn color(&self) -> [f32; 4] {
+        [1.0, 1.0, 1.0, 1.0]
+    }
+
     pub fn decide(&mut self,
                   fluids: &[f64; 2],
                   cells: &[bool; 6],

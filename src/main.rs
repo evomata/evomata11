@@ -57,6 +57,8 @@ fn main() {
         for x in 0..GRID_WIDTH {
             for y in 0..GRID_HEIGHT {
                 append_circle(&mut qbeziers,
+                              0.6,
+                              0.6,
                               g.hex(x, y).color(),
                               &na::Isometry2::new(na::Vector2::new(if y % 2 == 0 {
                                                                        1.0
@@ -71,6 +73,26 @@ fn main() {
                                                                     (GRID_HEIGHT as f32))),
                                                   na::Vector1::new(0.0))
                                   .to_homogeneous());
+
+                if let Some(ref c) = g.hex(x, y).cell {
+                    append_circle(&mut qbeziers,
+                                  0.3,
+                                  0.3,
+                                  c.color(),
+                                  &na::Isometry2::new(na::Vector2::new(if y % 2 == 0 {
+                                                                           1.0
+                                                                       } else {
+                                                                           0.0
+                                                                       } +
+                                                                       2.0 * (x as f32) +
+                                                                       0.5 -
+                                                                       (GRID_WIDTH as f32),
+                                                                       width_height_ratio *
+                                                                       (2.0 * (y as f32 + 0.5) -
+                                                                        (GRID_HEIGHT as f32))),
+                                                      na::Vector1::new(0.0))
+                                      .to_homogeneous());
+                }
             }
         }
 
@@ -97,9 +119,11 @@ fn main() {
     }
 }
 
-fn append_circle(v: &mut Vec<QBezier>, color: [f32; 4], modelview: &na::Matrix3<f32>) {
-    let radius = 0.6;
-    let circle_scale = 0.6;
+fn append_circle(v: &mut Vec<QBezier>,
+                 radius: f32,
+                 circle_scale: f32,
+                 color: [f32; 4],
+                 modelview: &na::Matrix3<f32>) {
     let transform = |n: [f32; 2]| {
         let na::Vector3 { x, y, .. } =
             *modelview * na::Vector3::new(n[0] * circle_scale, n[1] * circle_scale, 1.0);

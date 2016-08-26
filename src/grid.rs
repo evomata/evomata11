@@ -5,6 +5,8 @@ use std::mem;
 use rand::{Isaac64Rng, Rng};
 use noise::{Brownian2, perlin2};
 
+const SPAWN_RATE: f64 = 0.01;
+
 #[derive(Debug)]
 struct Delta {
     movement_attempts: Vec<(usize, usize)>,
@@ -87,8 +89,16 @@ impl Grid {
     }
 
     pub fn cycle(&mut self, rng: &mut Isaac64Rng) {
+        self.cycle_spawn(rng);
         self.cycle_cells(rng);
+        self.cycle_decisions();
         self.cycle_fluids();
+    }
+
+    fn cycle_spawn(&mut self, rng: &mut Isaac64Rng) {
+        if rng.next_f64() < SPAWN_RATE {
+            self.tiles[rng.gen_range(0, self.width * self.height)].cell = Some(Cell::new());
+        }
     }
 
     fn cycle_cells(&mut self, rng: &mut Isaac64Rng) {
@@ -119,28 +129,51 @@ impl Grid {
                 let (this, neighbors) = self.hex_and_neighbors(x, y);
                 // Clear the movements from the previous cycle.
                 this.delta.movement_attempts.clear();
-                this.solution.fluids = if let Some(ref decision) = this.decision {
+                this.solution.coefficients = if let Some(ref decision) = this.decision {
                     decision.coefficients
                 } else {
                     // Set the diffusion coefficients to the normal values.
                     [0.5, 1.0]
                 };
-                // Add any neighbor movements to the movement_attempts vector.
-                for (n, &facing) in neighbors.iter().zip(&[Direction::DownLeft,
-                                                           Direction::DownRight,
-                                                           Direction::Right,
-                                                           Direction::UpRight,
-                                                           Direction::UpLeft,
-                                                           Direction::Left]) {
-                    if let Some(Decision { choice: Choice::Move(direction), .. }) = n.decision {
-                        // It attempted to move into this hex cell.
-                        if facing == direction {
-                            this.delta
-                                .movement_attempts
-                                .push(in_direction(x, y, width, height, direction));
+
+                // Only add movements here if no cell is present.
+                if this.cell.is_none() {
+                    // Add any neighbor movements to the movement_attempts vector.
+                    for (n, &facing) in neighbors.iter().zip(&[Direction::DownLeft,
+                                                               Direction::DownRight,
+                                                               Direction::Right,
+                                                               Direction::UpRight,
+                                                               Direction::UpLeft,
+                                                               Direction::Left]) {
+                        if let Some(Decision { choice: Choice::Move(direction), .. }) = n.decision {
+                            // It attempted to move into this hex cell.
+                            if facing == direction {
+                                this.delta
+                                    .movement_attempts
+                                    .push(in_direction(x, y, width, height, direction));
+
+                                // No need to continue if we reach 2 attempts.
+                                if this.delta.movement_attempts.len() == 2 {
+                                    break;
+                                }
+                            }
                         }
                     }
                 }
+            }
+        }
+
+        // Perform the deltas.
+        for x in 0..self.width {
+            for y in 0..self.height {
+                // Handle movement.
+                if self.hex(x, y).delta.movement_attempts.len() == 1 {
+                    let from_coord = self.hex(x, y).delta.movement_attempts[0];
+                    self.hex_mut(x, y).cell = self.hex_mut(from_coord.0, from_coord.1).cell.take();
+                }
+
+                // Clear the decisions.
+                self.hex_mut(x, y).decision = None;
             }
         }
     }
@@ -188,5 +221,6 @@ fn in_direction(x: usize,
                 direction: Direction)
                 -> (usize, usize) {
     let diff = direction.delta(y % 2 == 0);
-    (((width + x) as isize + diff.0) as usize, ((height + y) as isize + diff.1) as usize)
+    (((width + x) as isize + diff.0) as usize % width,
+     ((height + y) as isize + diff.1) as usize % height)
 }
