@@ -1,8 +1,11 @@
 extern crate num;
 extern crate nalgebra as na;
 
-pub const TOTAL_FLUIDS: usize = 2;
-pub const NORMAL_DIFFUSION: [f64; 2] = [0.5, 1.0];
+pub const TOTAL_FLUIDS: usize = 3;
+pub const NORMAL_DIFFUSION: [f64; TOTAL_FLUIDS] = [0.5, 1.0, 1.0];
+pub const KILL_FLUID_NORMAL: f64 = 0.01;
+pub const KILL_FLUID_THRESHOLD: f64 = 0.011;
+pub const KILL_FLUID_DECAY_RATE: f64 = 0.00001;
 
 const TIMESTEP: f64 = 0.5;
 
@@ -25,9 +28,12 @@ impl Solution {
     pub fn react_deltas(&self) -> [f64; TOTAL_FLUIDS] {
         let a = self.fluids[1];
         let b = self.fluids[0];
+        let kill = self.fluids[2];
         let f = 0.029;
         let k = 0.057;
-        [a * b * b - (k + f) * b, -a * b * b + f * (1.0 - a)]
+        [a * b * b - (k + f) * b,
+         -a * b * b + f * (1.0 - a),
+         KILL_FLUID_DECAY_RATE * (KILL_FLUID_NORMAL - kill)]
     }
 
     pub fn diffuse_from(&mut self, other: &Solution) {

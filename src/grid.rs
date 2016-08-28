@@ -12,6 +12,8 @@ const INHALE_CAP: usize = 1000000;
 
 const FLUID_CYCLES: usize = 6;
 
+const KILL_FLUID_COLOR_NORMAL: f64 = 0.01;
+
 #[derive(Debug, Clone)]
 struct Mate {
     mate: (usize, usize),
@@ -33,7 +35,20 @@ pub struct Hex {
 
 impl Hex {
     pub fn color(&self) -> [f32; 4] {
-        [0.25 * self.solution.fluids[1] as f32, 0.0, 0.25 * self.solution.fluids[0] as f32, 1.0]
+        let killf = ((self.solution.fluids[2] - KILL_FLUID_NORMAL) /
+                     KILL_FLUID_COLOR_NORMAL) as f32;
+        [if killf > 0.0 {
+             killf
+         } else {
+             0.0
+         },
+         if killf < 0.0 {
+             -killf
+         } else {
+             0.0
+         },
+         0.25 * self.solution.fluids[0] as f32,
+         1.0]
     }
 }
 
@@ -162,7 +177,7 @@ impl Grid {
                     decision.coefficients
                 } else {
                     // Set the diffusion coefficients to the normal values.
-                    [0.5, 1.0]
+                    NORMAL_DIFFUSION
                 };
 
                 // Only add movements here if no cell is present.
@@ -281,7 +296,9 @@ impl Grid {
         // Finish the cycle.
         for hex in &mut self.tiles {
             if hex.cell.is_some() {
-                if hex.solution.fluids[0] <= CONSUMPTION {
+                if hex.solution.fluids[2] >= KILL_FLUID_THRESHOLD {
+                    hex.cell = None;
+                } else if hex.solution.fluids[0] <= CONSUMPTION {
                     if hex.cell.as_ref().unwrap().inhale != 0 {
                         hex.cell.as_mut().unwrap().inhale -= 1;
                     } else {
@@ -313,8 +330,10 @@ fn randomizing_vec(width: usize, height: usize, rng: &mut Isaac64Rng) -> Vec<Hex
         .cartesian_product((0..width))
         .map(|(x, y)| {
             Hex {
-                solution: Solution::new([noise.apply(&seeds[0], &[x as f64, y as f64]), 1.0],
-                                        [0.5, 1.0]),
+                solution: Solution::new([noise.apply(&seeds[0], &[x as f64, y as f64]),
+                                         1.0,
+                                         KILL_FLUID_NORMAL],
+                                        NORMAL_DIFFUSION),
                 cell: None,
                 decision: None,
                 delta: Delta {

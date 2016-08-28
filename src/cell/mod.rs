@@ -83,7 +83,7 @@ pub enum Choice {
 #[derive(Clone, Debug)]
 pub struct Decision {
     pub choice: Choice,
-    pub coefficients: [f64; 2],
+    pub coefficients: [f64; TOTAL_FLUIDS],
 }
 
 #[derive(Clone)]
@@ -122,18 +122,25 @@ impl Cell {
                       MIN,
                       fluids[0][0],
                       fluids[0][1],
+                      fluids[0][2],
                       fluids[(0 + self.turn) % 6 + 1][0],
                       fluids[(0 + self.turn) % 6 + 1][1],
+                      fluids[(0 + self.turn) % 6 + 1][2],
                       fluids[(1 + self.turn) % 6 + 1][0],
                       fluids[(1 + self.turn) % 6 + 1][1],
+                      fluids[(1 + self.turn) % 6 + 1][2],
                       fluids[(2 + self.turn) % 6 + 1][0],
                       fluids[(2 + self.turn) % 6 + 1][1],
+                      fluids[(2 + self.turn) % 6 + 1][2],
                       fluids[(3 + self.turn) % 6 + 1][0],
                       fluids[(3 + self.turn) % 6 + 1][1],
+                      fluids[(3 + self.turn) % 6 + 1][2],
                       fluids[(4 + self.turn) % 6 + 1][0],
                       fluids[(4 + self.turn) % 6 + 1][1],
+                      fluids[(4 + self.turn) % 6 + 1][2],
                       fluids[(5 + self.turn) % 6 + 1][0],
                       fluids[(5 + self.turn) % 6 + 1][1],
+                      fluids[(5 + self.turn) % 6 + 1][2],
                       nc(cells[(0 + self.turn) % 6]),
                       nc(cells[(1 + self.turn) % 6]),
                       nc(cells[(2 + self.turn) % 6]),
@@ -146,7 +153,8 @@ impl Cell {
                       self.brain.memory[3]];
 
         let mut compute = self.brain.mep.compute(&inputs[..]);
-        let coefficients = [compute.next().unwrap(), compute.next().unwrap()];
+        let coefficients =
+            [compute.next().unwrap(), compute.next().unwrap(), compute.next().unwrap()];
         let move_attempt = compute.next().unwrap();
         let move_directions = [compute.next().unwrap(),
                                compute.next().unwrap(),

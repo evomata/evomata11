@@ -4,12 +4,12 @@ use mli;
 
 // 0.0, 1.0, -1.0, 2.0, -2.0, MAX, MIN
 pub const CONST_INPUTS: usize = 7;
-// Fluids (14), neighbor present (6).
-pub const STATIC_INPUTS: usize = 14 + 6;
+// Fluids (7 * 3), neighbor present (6).
+pub const STATIC_INPUTS: usize = 7 * 3 + 6;
 pub const TOTAL_MEMORY: usize = 4;
 pub const TOTAL_INPUTS: usize = CONST_INPUTS + STATIC_INPUTS + TOTAL_MEMORY;
-// Coefficients (2), Movement(7), Mate(13), Divide, Turn(6)
-pub const STATIC_OUTPUTS: usize = 2 + 7 + 13 + 1 + 6;
+// Coefficients (3), Movement(7), Mate(13), Divide, Turn(6)
+pub const STATIC_OUTPUTS: usize = 3 + 7 + 13 + 1 + 6;
 pub const TOTAL_OUTPUTS: usize = STATIC_OUTPUTS + TOTAL_MEMORY;
 pub const DEFAULT_MUTATE_SIZE: usize = 8;
 pub const DEFAULT_CROSSOVER_POINTS: usize = 1;
