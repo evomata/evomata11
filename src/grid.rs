@@ -6,7 +6,7 @@ use rand::{Isaac64Rng, Rng};
 use noise::{Brownian2, perlin2};
 
 const SPAWN_RATE: f64 = 0.1;
-const CONSUMPTION: f64 = 0.07;
+const CONSUMPTION: f64 = 0.01;
 const SURVIVAL_THRESHOLD: f64 = 0.1;
 const INHALE_CAP: usize = 1000000;
 
@@ -227,16 +227,20 @@ impl Grid {
                 } else if self.hex(x, y).delta.mate_attempts.len() == 1 {
                     let mate = self.hex(x, y).delta.mate_attempts[0].clone();
                     self.hex_mut(x, y).cell = if mate.mate == (x, y) {
-                        Some(self.hex(mate.source.0, mate.source.1)
+                        Some(self.hex_mut(mate.source.0, mate.source.1)
                             .cell
-                            .as_ref()
+                            .as_mut()
                             .unwrap()
                             .divide(rng))
                     } else {
                         if self.hex(mate.mate.0, mate.mate.1).cell.is_some() {
-                            Some(self.hex(mate.source.0, mate.source.1)
+                            // This is safe so long as the cells arent the same.
+                            Some(unsafe {
+                                    mem::transmute::<_,
+                                                     &mut Hex>(self.hex_mut(mate.source.0, mate.source.1))
+                                }
                                 .cell
-                                .as_ref()
+                                .as_mut()
                                 .unwrap()
                                 .mate(&self.hex(mate.mate.0, mate.mate.1)
                                           .cell

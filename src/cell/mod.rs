@@ -1,12 +1,11 @@
 mod brain;
 
 use rand::{Isaac64Rng, Rng};
-
 use mli::SISO;
-
 use itertools::Itertools;
-
 use super::fluid::{NORMAL_DIFFUSION, TOTAL_FLUIDS};
+
+const INITIAL_INHALE: usize = 50;
 
 enum_from_primitive! {
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -97,7 +96,7 @@ pub struct Cell {
 impl Cell {
     pub fn new(rng: &mut Isaac64Rng) -> Self {
         Cell {
-            inhale: 0,
+            inhale: INITIAL_INHALE,
             brain: brain::Brain::new(rng),
             turn: rng.gen_range(0, 6),
         }
@@ -324,17 +323,19 @@ impl Cell {
         }
     }
 
-    pub fn mate(&self, other: &Cell, rng: &mut Isaac64Rng) -> Cell {
+    pub fn mate(&mut self, other: &Cell, rng: &mut Isaac64Rng) -> Cell {
+        self.inhale /= 2;
         Cell {
-            inhale: 0,
+            inhale: self.inhale,
             brain: self.brain.mate(&other.brain, rng),
             turn: self.turn,
         }
     }
 
-    pub fn divide(&self, rng: &mut Isaac64Rng) -> Cell {
+    pub fn divide(&mut self, rng: &mut Isaac64Rng) -> Cell {
+        self.inhale /= 2;
         Cell {
-            inhale: 0,
+            inhale: self.inhale,
             brain: self.brain.divide(rng),
             turn: self.turn,
         }
