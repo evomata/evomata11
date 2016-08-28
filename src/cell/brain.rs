@@ -2,8 +2,8 @@ use rand::{Rng, Isaac64Rng};
 use itertools::Itertools;
 use mli;
 
-// 0.0, 1.0, -1.0, 2.0, -2.0, MAX, MIN
-pub const CONST_INPUTS: usize = 7;
+// 0.0, 0.5, -0.5, 1.0, -1.0, 2.0, -2.0, MAX, MIN
+pub const CONST_INPUTS: usize = 9;
 // Inhale, Fluids (7 * 4), neighbor present (6).
 pub const STATIC_INPUTS: usize = 1 + 7 * 4 + 6;
 pub const TOTAL_MEMORY: usize = 4;
