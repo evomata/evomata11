@@ -6,6 +6,7 @@ use itertools::Itertools;
 use super::fluid::{NORMAL_DIFFUSION, TOTAL_FLUIDS};
 
 const INITIAL_INHALE: usize = 50;
+const COLOR_MUTATION_CHANCE: f32 = 0.01;
 
 enum_from_primitive! {
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -89,6 +90,7 @@ pub struct Decision {
 #[derive(Clone)]
 pub struct Cell {
     pub inhale: usize,
+    pub color: [f32; 3],
     pub brain: brain::Brain,
     turn: usize,
 }
@@ -97,13 +99,14 @@ impl Cell {
     pub fn new(rng: &mut Isaac64Rng) -> Self {
         Cell {
             inhale: INITIAL_INHALE,
+            color: [rng.next_f32(), rng.next_f32(), rng.next_f32()],
             brain: brain::Brain::new(rng),
             turn: rng.gen_range(0, 6),
         }
     }
 
     pub fn color(&self) -> [f32; 4] {
-        [1.0, 1.0, 1.0, 1.0]
+        [self.color[0], self.color[1], self.color[2], 1.0]
     }
 
     pub fn decide(&mut self, fluids: [&[f64; TOTAL_FLUIDS]; 7], cells: &[bool; 6]) -> Decision {
@@ -340,6 +343,11 @@ impl Cell {
         self.inhale /= 2;
         Cell {
             inhale: self.inhale,
+            color: if rng.next_f32() < COLOR_MUTATION_CHANCE {
+                [rng.next_f32(), rng.next_f32(), rng.next_f32()]
+            } else {
+                self.color
+            },
             brain: self.brain.mate(&other.brain, rng),
             turn: self.turn,
         }
@@ -349,6 +357,11 @@ impl Cell {
         self.inhale /= 2;
         Cell {
             inhale: self.inhale,
+            color: if rng.next_f32() < COLOR_MUTATION_CHANCE {
+                [rng.next_f32(), rng.next_f32(), rng.next_f32()]
+            } else {
+                self.color
+            },
             brain: self.brain.divide(rng),
             turn: self.turn,
         }
