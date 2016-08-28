@@ -78,6 +78,7 @@ pub enum Choice {
         spawn: Direction,
     },
     Move(Direction),
+    Explode(bool),
     Nothing,
 }
 
@@ -232,6 +233,8 @@ impl Cell {
                                compute.next().unwrap(),
                                compute.next().unwrap()];
 
+        let explode_attempt = compute.next().unwrap();
+
         // Handle turn immediately so they can turn to stimuli.
         if let Some(dir) = turn_directions.iter()
             .cloned()
@@ -247,7 +250,7 @@ impl Cell {
 
         self.brain.memory.iter_mut().set_from(compute);
         Decision {
-            choice: match [move_attempt, divide_attempt, mate_attempt]
+            choice: match [move_attempt, divide_attempt, mate_attempt, explode_attempt.abs()]
                 .iter()
                 .cloned()
                 .enumerate()
@@ -359,6 +362,15 @@ impl Cell {
                                       (bestval, bestdir)
                                   })
                             .1,
+                    }
+                }
+                Some(3) => {
+                    if explode_attempt > 1.0 {
+                        Choice::Explode(true)
+                    } else if explode_attempt < -1.0 {
+                        Choice::Explode(false)
+                    } else {
+                        Choice::Nothing
                     }
                 }
                 _ => Choice::Nothing,

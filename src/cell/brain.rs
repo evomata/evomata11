@@ -8,8 +8,8 @@ pub const CONST_INPUTS: usize = 9;
 pub const STATIC_INPUTS: usize = 1 + 7 * 8 + 6;
 pub const TOTAL_MEMORY: usize = 4;
 pub const TOTAL_INPUTS: usize = CONST_INPUTS + STATIC_INPUTS + TOTAL_MEMORY;
-// Coefficients (8), Movement(7), Mate(13), Divide, Turn(6)
-pub const STATIC_OUTPUTS: usize = 8 + 7 + 13 + 1 + 6;
+// Coefficients (8), Movement(7), Mate(13), Divide, Turn(6), Explode
+pub const STATIC_OUTPUTS: usize = 8 + 7 + 13 + 1 + 6 + 1;
 pub const TOTAL_OUTPUTS: usize = STATIC_OUTPUTS + TOTAL_MEMORY;
 pub const DEFAULT_MUTATE_SIZE: usize = 8;
 pub const DEFAULT_CROSSOVER_POINTS: usize = 1;

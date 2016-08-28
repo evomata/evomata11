@@ -15,6 +15,8 @@ const FLUID_CYCLES: usize = 6;
 const KILL_FLUID_COLOR_NORMAL: f64 = 0.01;
 const SIGNAL_FLUID_COLOR_NORMAL: f64 = 0.1;
 
+const EXPLODE_AMOUNT: f64 = 0.1;
+
 #[derive(Debug, Clone)]
 struct Mate {
     mate: (usize, usize),
@@ -215,6 +217,13 @@ impl Grid {
                                         break;
                                     }
                                 }
+                            }
+                            Some(Decision { choice: Choice::Explode(way), .. }) => {
+                                this.solution.diffuse[2] += if way {
+                                    EXPLODE_AMOUNT
+                                } else {
+                                    -EXPLODE_AMOUNT
+                                };
                             }
                             _ => {}
                         }

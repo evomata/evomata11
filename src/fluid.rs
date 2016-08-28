@@ -4,7 +4,7 @@ extern crate nalgebra as na;
 pub const TOTAL_FLUIDS: usize = 8;
 pub const NORMAL_DIFFUSION: [f64; TOTAL_FLUIDS] = [0.5, 1.0, 0.2, 0.5, 0.5, 0.5, 0.5, 0.5];
 pub const KILL_FLUID_NORMAL: f64 = 0.05;
-pub const KILL_FLUID_DECAY: f64 = 0.00001;
+pub const KILL_FLUID_DECAY: f64 = 0.01;
 pub const KILL_FLUID_UPPER_THRESHOLD: f64 = 0.052;
 pub const KILL_FLUID_LOWER_THRESHOLD: f64 = 0.048;
 pub const SIGNAL_FLUID_NORMAL: f64 = 0.5;
@@ -16,7 +16,7 @@ const TIMESTEP: f64 = 0.5;
 pub struct Solution {
     pub fluids: [f64; TOTAL_FLUIDS],
     pub coefficients: [f64; TOTAL_FLUIDS],
-    diffuse: [f64; TOTAL_FLUIDS],
+    pub diffuse: [f64; TOTAL_FLUIDS],
 }
 
 impl Solution {
