@@ -123,6 +123,7 @@ impl Cell {
                       -2.0,
                       MAX,
                       MIN,
+                      self.inhale as f64,
                       fluids[0][0],
                       fluids[0][1],
                       fluids[0][2],
