@@ -44,8 +44,9 @@ impl Hex {
         let signal_colors =
             [[0.0, 0.8, 0.0], [0.0, 0.5, 0.5], [0.5, 0.5, 0.5], [0.5, 0.0, 0.5], [0.5, 0.5, 0.0]];
         for i in 0..5 {
-            let signalf = ((self.solution.fluids[3 + i] - SIGNAL_FLUID_NORMAL) /
-                           SIGNAL_FLUID_COLOR_NORMAL) as f32;
+            let signalf = (((self.solution.fluids[3 + i] - SIGNAL_FLUID_NORMAL) /
+                            SIGNAL_FLUID_COLOR_NORMAL) as f32)
+                .abs();
             for j in 0..3 {
                 ocolors[j] += signal_colors[i][j] * signalf;
             }
