@@ -157,7 +157,7 @@ impl Brain {
         use mli::Genetic;
         let mut b = Brain {
             mep: Genetic::mate((&self.mep, &other.mep), rng),
-            memory: self.memory,
+            memory: [0.0; TOTAL_MEMORY],
         };
         // Perform unit mutations on offspring
         b.mutate(rng);
@@ -167,7 +167,7 @@ impl Brain {
     pub fn divide(&self, rng: &mut Isaac64Rng) -> Self {
         let mut b = Brain {
             mep: self.mep.clone(),
-            memory: self.memory,
+            memory: [0.0; TOTAL_MEMORY],
         };
         // Perform unit mutations on offspring
         b.mutate(rng);

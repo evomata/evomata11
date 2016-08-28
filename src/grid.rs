@@ -6,9 +6,9 @@ use rand::{Isaac64Rng, Rng};
 use noise::{Brownian2, perlin2};
 
 const SPAWN_RATE: f64 = 0.1;
-const CONSUMPTION: f64 = 0.1;
+const CONSUMPTION: f64 = 0.07;
 const SURVIVAL_THRESHOLD: f64 = 0.1;
-const INHALE_CAP: usize = 20;
+const INHALE_CAP: usize = 1000000;
 
 const FLUID_CYCLES: usize = 6;
 
