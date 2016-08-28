@@ -1,12 +1,14 @@
 extern crate num;
 extern crate nalgebra as na;
 
-pub const TOTAL_FLUIDS: usize = 3;
-pub const NORMAL_DIFFUSION: [f64; TOTAL_FLUIDS] = [0.5, 1.0, 0.2];
+pub const TOTAL_FLUIDS: usize = 4;
+pub const NORMAL_DIFFUSION: [f64; TOTAL_FLUIDS] = [0.5, 1.0, 0.2, 0.5];
 pub const KILL_FLUID_NORMAL: f64 = 0.05;
 pub const KILL_FLUID_DECAY: f64 = 0.00001;
 pub const KILL_FLUID_UPPER_THRESHOLD: f64 = 0.052;
 pub const KILL_FLUID_LOWER_THRESHOLD: f64 = 0.048;
+pub const SIGNAL_FLUID_NORMAL: f64 = 0.5;
+pub const SIGNAL_FLUID_DECAY: f64 = 0.00001;
 
 const TIMESTEP: f64 = 0.5;
 
@@ -34,7 +36,8 @@ impl Solution {
         let k = 0.057;
         [a * b * b - (k + f) * b,
          -a * b * b + f * (1.0 - a),
-         KILL_FLUID_DECAY * (KILL_FLUID_NORMAL - kill)]
+         KILL_FLUID_DECAY * (KILL_FLUID_NORMAL - kill),
+         SIGNAL_FLUID_DECAY * (SIGNAL_FLUID_NORMAL - self.fluids[3])]
     }
 
     pub fn diffuse_from(&mut self, other: &Solution) {

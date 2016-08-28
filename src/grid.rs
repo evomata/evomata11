@@ -13,6 +13,7 @@ const INHALE_CAP: usize = 1000000;
 const FLUID_CYCLES: usize = 6;
 
 const KILL_FLUID_COLOR_NORMAL: f64 = 0.01;
+const SIGNAL_FLUID_COLOR_NORMAL: f64 = 0.1;
 
 #[derive(Debug, Clone)]
 struct Mate {
@@ -37,18 +38,9 @@ impl Hex {
     pub fn color(&self) -> [f32; 4] {
         let killf = ((self.solution.fluids[2] - KILL_FLUID_NORMAL) /
                      KILL_FLUID_COLOR_NORMAL) as f32;
-        [if killf > 0.0 {
-             killf
-         } else {
-             0.0
-         },
-         if killf < 0.0 {
-             -killf
-         } else {
-             0.0
-         },
-         0.25 * self.solution.fluids[0] as f32,
-         1.0]
+        let signalf = ((self.solution.fluids[3] - SIGNAL_FLUID_NORMAL) /
+                       SIGNAL_FLUID_COLOR_NORMAL) as f32;
+        [killf.abs(), signalf.abs(), 0.25 * self.solution.fluids[0] as f32, 1.0]
     }
 }
 
@@ -333,7 +325,8 @@ fn randomizing_vec(width: usize, height: usize, rng: &mut Isaac64Rng) -> Vec<Hex
             Hex {
                 solution: Solution::new([noise.apply(&seeds[0], &[x as f64, y as f64]),
                                          1.0,
-                                         KILL_FLUID_NORMAL],
+                                         KILL_FLUID_NORMAL,
+                                         SIGNAL_FLUID_NORMAL],
                                         NORMAL_DIFFUSION),
                 cell: None,
                 decision: None,
