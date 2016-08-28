@@ -40,9 +40,17 @@ impl Hex {
     pub fn color(&self) -> [f32; 4] {
         let killf = ((self.solution.fluids[2] - KILL_FLUID_NORMAL) /
                      KILL_FLUID_COLOR_NORMAL) as f32;
-        let signalf = ((self.solution.fluids[3] - SIGNAL_FLUID_NORMAL) /
-                       SIGNAL_FLUID_COLOR_NORMAL) as f32;
-        [killf.abs(), signalf.abs(), 0.25 * self.solution.fluids[0] as f32, 1.0]
+        let mut ocolors = [killf.abs(), 0.0, 0.25 * self.solution.fluids[0] as f32, 1.0];
+        let signal_colors =
+            [[0.0, 0.8, 0.0], [0.0, 0.5, 0.5], [0.5, 0.5, 0.5], [0.5, 0.0, 0.5], [0.5, 0.5, 0.0]];
+        for i in 0..5 {
+            let signalf = ((self.solution.fluids[3 + i] - SIGNAL_FLUID_NORMAL) /
+                           SIGNAL_FLUID_COLOR_NORMAL) as f32;
+            for j in 0..3 {
+                ocolors[j] += signal_colors[i][j] * signalf;
+            }
+        }
+        ocolors
     }
 }
 
