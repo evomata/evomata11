@@ -321,7 +321,12 @@ impl Cell {
                 for i in 0..TOTAL_FLUIDS {
                     let f = coefficients[i];
                     ncoef[i] = if f.is_normal() {
-                        NORMAL_DIFFUSION[i] * (sig(f) * 0.5 + 1.0)
+                        let nf = sig(f);
+                        if nf > 0.0 {
+                            NORMAL_DIFFUSION[i] * (nf * 0.5 + 1.0)
+                        } else {
+                            NORMAL_DIFFUSION[i] * (nf * 1.0 / 3.0 + 1.0)
+                        }
                     } else {
                         NORMAL_DIFFUSION[i]
                     };

@@ -2,10 +2,11 @@ extern crate num;
 extern crate nalgebra as na;
 
 pub const TOTAL_FLUIDS: usize = 3;
-pub const NORMAL_DIFFUSION: [f64; TOTAL_FLUIDS] = [0.5, 1.0, 1.0];
-pub const KILL_FLUID_NORMAL: f64 = 0.01;
-pub const KILL_FLUID_THRESHOLD: f64 = 0.011;
-pub const KILL_FLUID_DECAY_RATE: f64 = 0.00001;
+pub const NORMAL_DIFFUSION: [f64; TOTAL_FLUIDS] = [0.5, 1.0, 0.2];
+pub const KILL_FLUID_NORMAL: f64 = 0.05;
+pub const KILL_FLUID_DECAY: f64 = 0.00001;
+pub const KILL_FLUID_UPPER_THRESHOLD: f64 = 0.052;
+pub const KILL_FLUID_LOWER_THRESHOLD: f64 = 0.048;
 
 const TIMESTEP: f64 = 0.5;
 
@@ -33,7 +34,7 @@ impl Solution {
         let k = 0.057;
         [a * b * b - (k + f) * b,
          -a * b * b + f * (1.0 - a),
-         KILL_FLUID_DECAY_RATE * (KILL_FLUID_NORMAL - kill)]
+         KILL_FLUID_DECAY * (KILL_FLUID_NORMAL - kill)]
     }
 
     pub fn diffuse_from(&mut self, other: &Solution) {
@@ -43,11 +44,13 @@ impl Solution {
     }
 
     pub fn end_cycle(&mut self) {
+        for i in 0..TOTAL_FLUIDS {
+            self.fluids[i] += TIMESTEP * (self.diffuse[i] - self.coefficients[i] * self.fluids[i]);
+            self.diffuse[i] = 0.0;
+        }
         let reacts = self.react_deltas();
         for i in 0..TOTAL_FLUIDS {
-            self.fluids[i] += TIMESTEP *
-                              (reacts[i] + self.diffuse[i] - self.coefficients[i] * self.fluids[i]);
-            self.diffuse[i] = 0.0;
+            self.fluids[i] += TIMESTEP * reacts[i];
         }
     }
 }

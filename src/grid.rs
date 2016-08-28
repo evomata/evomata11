@@ -6,7 +6,7 @@ use rand::{Isaac64Rng, Rng};
 use noise::{Brownian2, perlin2};
 
 const SPAWN_RATE: f64 = 0.1;
-const CONSUMPTION: f64 = 0.01;
+const CONSUMPTION: f64 = 0.05;
 const SURVIVAL_THRESHOLD: f64 = 0.1;
 const INHALE_CAP: usize = 1000000;
 
@@ -296,7 +296,8 @@ impl Grid {
         // Finish the cycle.
         for hex in &mut self.tiles {
             if hex.cell.is_some() {
-                if hex.solution.fluids[2] >= KILL_FLUID_THRESHOLD {
+                if hex.solution.fluids[2] > KILL_FLUID_UPPER_THRESHOLD ||
+                   hex.solution.fluids[2] < KILL_FLUID_LOWER_THRESHOLD {
                     hex.cell = None;
                 } else if hex.solution.fluids[0] <= CONSUMPTION {
                     if hex.cell.as_ref().unwrap().inhale != 0 {
