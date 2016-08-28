@@ -13,7 +13,7 @@ const INHALE_CAP: usize = 1000000;
 const FLUID_CYCLES: usize = 6;
 
 const KILL_FLUID_COLOR_NORMAL: f64 = 0.01;
-const SIGNAL_FLUID_COLOR_NORMAL: f64 = 0.1;
+const SIGNAL_FLUID_COLOR_NORMAL: f64 = 0.2;
 
 const EXPLODE_AMOUNT: f64 = 0.1;
 
