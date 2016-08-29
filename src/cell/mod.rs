@@ -5,7 +5,7 @@ use mli::SISO;
 use itertools::Itertools;
 use super::fluid::{NORMAL_DIFFUSION, TOTAL_FLUIDS};
 
-const INITIAL_INHALE: usize = 50;
+const INITIAL_INHALE: usize = 500;
 
 enum_from_primitive! {
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]

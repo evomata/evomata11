@@ -10,7 +10,7 @@ const CONSUMPTION: f64 = 0.04;
 const SURVIVAL_THRESHOLD: f64 = 0.0;
 const DEATH_RELEASE_COEFFICIENT: f64 = 0.5;
 const INHALE_CAP: usize = 1000000;
-const MOVEMENT_COST: usize = 1;
+const MOVEMENT_COST: usize = 2;
 
 const FLUID_CYCLES: usize = 6;
 
@@ -253,13 +253,33 @@ impl Grid {
                 if self.hex(x, y).delta.movement_attempts.len() == 1 {
                     let from_coord = self.hex(x, y).delta.movement_attempts[0];
                     self.hex_mut(x, y).cell = self.hex_mut(from_coord.0, from_coord.1).cell.take();
-                    if self.hex(x, y).cell.as_ref().unwrap().inhale >= MOVEMENT_COST {
+                    // Apply movement cost.
+                    let inhale = self.hex(x, y).cell.as_ref().unwrap().inhale;
+                    if inhale >= MOVEMENT_COST {
                         self.hex_mut(x, y).cell.as_mut().unwrap().inhale -= MOVEMENT_COST;
+                    } else {
+                        self.hex_mut(x, y).cell.as_mut().unwrap().inhale = 0;
                     }
                     // Handle mating.
                 } else if self.hex(x, y).delta.mate_attempts.len() == 1 {
                     let mate = self.hex(x, y).delta.mate_attempts[0].clone();
                     self.hex_mut(x, y).cell = if mate.mate == (x, y) {
+                        // Apply movement cost to source.
+                        let inhale =
+                            self.hex(mate.source.0, mate.source.1).cell.as_ref().unwrap().inhale;
+                        if inhale >= MOVEMENT_COST {
+                            self.hex_mut(mate.source.0, mate.source.1)
+                                .cell
+                                .as_mut()
+                                .unwrap()
+                                .inhale -= MOVEMENT_COST;
+                        } else {
+                            self.hex_mut(mate.source.0, mate.source.1)
+                                .cell
+                                .as_mut()
+                                .unwrap()
+                                .inhale = 0;
+                        }
                         Some(self.hex_mut(mate.source.0, mate.source.1)
                             .cell
                             .as_mut()
@@ -267,6 +287,25 @@ impl Grid {
                             .divide(rng))
                     } else {
                         if self.hex(mate.mate.0, mate.mate.1).cell.is_some() {
+                            // Apply movement cost to source.
+                            let inhale = self.hex(mate.source.0, mate.source.1)
+                                .cell
+                                .as_ref()
+                                .unwrap()
+                                .inhale;
+                            if inhale >= MOVEMENT_COST {
+                                self.hex_mut(mate.source.0, mate.source.1)
+                                    .cell
+                                    .as_mut()
+                                    .unwrap()
+                                    .inhale -= MOVEMENT_COST;
+                            } else {
+                                self.hex_mut(mate.source.0, mate.source.1)
+                                    .cell
+                                    .as_mut()
+                                    .unwrap()
+                                    .inhale = 0;
+                            }
                             // This is safe so long as the cells arent the same.
                             Some(unsafe {
                                     mem::transmute::<_,
