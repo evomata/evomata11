@@ -10,13 +10,13 @@ const CONSUMPTION: f64 = 0.04;
 const SURVIVAL_THRESHOLD: f64 = 0.0;
 const DEATH_RELEASE_COEFFICIENT: f64 = 0.5;
 const INHALE_CAP: usize = 1000000;
-const MOVEMENT_COST: usize = 5;
+const MOVEMENT_COST: usize = 20;
 
 const FLUID_CYCLES: usize = 6;
 
 const KILL_FLUID_COLOR_NORMAL: f64 = 0.01;
 const SIGNAL_FLUID_COLOR_NORMAL: f64 = 0.2;
-const FOOD_FLUID_COLOR_NORMAL: f64 = 5.0;
+const FOOD_FLUID_COLOR_NORMAL: f64 = 20.0;
 
 const EXPLODE_AMOUNT: f64 = 0.1;
 
@@ -388,7 +388,7 @@ impl Grid {
 
 fn randomizing_vec(width: usize, height: usize, rng: &mut Isaac64Rng) -> Vec<Hex> {
     let seeds = [rng.gen(), rng.gen()];
-    let noise = Brownian2::new(perlin2, 4).wavelength(32.0);
+    let noise = Brownian2::new(perlin2, 4).wavelength(64.0);
     (0..height)
         .cartesian_product((0..width))
         .map(|(x, y)| {
