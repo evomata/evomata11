@@ -2,13 +2,14 @@ extern crate num;
 extern crate nalgebra as na;
 
 pub const TOTAL_FLUIDS: usize = 8;
-pub const NORMAL_DIFFUSION: [f64; TOTAL_FLUIDS] = [0.5, 1.0, 0.2, 0.5, 0.5, 0.5, 0.5, 0.5];
+pub const NORMAL_DIFFUSION: [f64; TOTAL_FLUIDS] = [0.1, 1.0, 0.2, 0.5, 0.5, 0.5, 0.5, 0.5];
 pub const KILL_FLUID_NORMAL: f64 = 0.05;
 pub const KILL_FLUID_DECAY: f64 = 0.01;
 pub const KILL_FLUID_UPPER_THRESHOLD: f64 = 0.052;
 pub const KILL_FLUID_LOWER_THRESHOLD: f64 = 0.048;
 pub const SIGNAL_FLUID_NORMAL: f64 = 0.5;
 pub const SIGNAL_FLUID_DECAY: f64 = 0.001;
+pub const B_FOOD_RATE: f64 = 0.001;
 
 const TIMESTEP: f64 = 0.5;
 
@@ -30,14 +31,14 @@ impl Solution {
 
     pub fn react_deltas(&self) -> [f64; TOTAL_FLUIDS] {
         let a = self.fluids[1];
-        let b = self.fluids[0];
+        let b = self.fluids[3];
         let kill = self.fluids[2];
         let f = 0.029;
         let k = 0.057;
-        [a * b * b - (k + f) * b,
+        [B_FOOD_RATE * b,
          -a * b * b + f * (1.0 - a),
          KILL_FLUID_DECAY * (KILL_FLUID_NORMAL - kill),
-         SIGNAL_FLUID_DECAY * (SIGNAL_FLUID_NORMAL - self.fluids[3]),
+         a * b * b - (k + f) * b,
          SIGNAL_FLUID_DECAY * (SIGNAL_FLUID_NORMAL - self.fluids[4]),
          SIGNAL_FLUID_DECAY * (SIGNAL_FLUID_NORMAL - self.fluids[5]),
          SIGNAL_FLUID_DECAY * (SIGNAL_FLUID_NORMAL - self.fluids[6]),

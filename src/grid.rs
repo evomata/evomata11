@@ -8,12 +8,14 @@ use noise::{Brownian2, perlin2};
 const SPAWN_RATE: f64 = 0.1;
 const CONSUMPTION: f64 = 0.04;
 const SURVIVAL_THRESHOLD: f64 = 0.1;
+const DEATH_RELEASE_COEFFICIENT: f64 = 0.5;
 const INHALE_CAP: usize = 1000000;
 
 const FLUID_CYCLES: usize = 6;
 
 const KILL_FLUID_COLOR_NORMAL: f64 = 0.01;
 const SIGNAL_FLUID_COLOR_NORMAL: f64 = 0.2;
+const FOOD_FLUID_COLOR_NORMAL: f64 = 1.0;
 
 const EXPLODE_AMOUNT: f64 = 0.1;
 
@@ -40,11 +42,13 @@ impl Hex {
     pub fn color(&self) -> [f32; 4] {
         let killf = ((self.solution.fluids[2] - KILL_FLUID_NORMAL) /
                      KILL_FLUID_COLOR_NORMAL) as f32;
-        let mut ocolors = [killf.abs(), 0.0, 0.25 * self.solution.fluids[0] as f32, 1.0];
-        let signal_colors =
-            [[0.0, 0.8, 0.0], [0.0, 0.5, 0.5], [0.5, 0.5, 0.5], [0.5, 0.0, 0.5], [0.5, 0.5, 0.0]];
-        for i in 0..5 {
-            let signalf = (((self.solution.fluids[3 + i] - SIGNAL_FLUID_NORMAL) /
+        let mut ocolors = [killf.abs(),
+                           (self.solution.fluids[0] / FOOD_FLUID_COLOR_NORMAL) as f32,
+                           0.25 * self.solution.fluids[3] as f32,
+                           1.0];
+        let signal_colors = [[0.0, 0.5, 0.5], [0.5, 0.5, 0.5], [0.5, 0.0, 0.5], [0.5, 0.5, 0.0]];
+        for i in 0..4 {
+            let signalf = (((self.solution.fluids[4 + i] - SIGNAL_FLUID_NORMAL) /
                             SIGNAL_FLUID_COLOR_NORMAL) as f32)
                 .abs();
             for j in 0..3 {
@@ -308,6 +312,8 @@ impl Grid {
             if hex.cell.is_some() {
                 if hex.solution.fluids[2] > KILL_FLUID_UPPER_THRESHOLD ||
                    hex.solution.fluids[2] < KILL_FLUID_LOWER_THRESHOLD {
+                    hex.solution.fluids[0] += DEATH_RELEASE_COEFFICIENT * CONSUMPTION *
+                                              hex.cell.as_ref().unwrap().inhale as f64;
                     hex.cell = None;
                 } else if hex.solution.fluids[0] <= CONSUMPTION {
                     if hex.cell.as_ref().unwrap().inhale != 0 {
@@ -321,6 +327,8 @@ impl Grid {
                         if hex.cell.as_ref().unwrap().inhale != 0 {
                             hex.cell.as_mut().unwrap().inhale -= 1;
                         } else {
+                            hex.solution.fluids[0] += DEATH_RELEASE_COEFFICIENT * CONSUMPTION *
+                                                      hex.cell.as_ref().unwrap().inhale as f64;
                             hex.cell = None;
                         }
                     } else {
@@ -341,10 +349,10 @@ fn randomizing_vec(width: usize, height: usize, rng: &mut Isaac64Rng) -> Vec<Hex
         .cartesian_product((0..width))
         .map(|(x, y)| {
             Hex {
-                solution: Solution::new([noise.apply(&seeds[0], &[x as f64, y as f64]),
+                solution: Solution::new([0.0,
                                          1.0,
                                          KILL_FLUID_NORMAL,
-                                         SIGNAL_FLUID_NORMAL,
+                                         noise.apply(&seeds[0], &[x as f64, y as f64]),
                                          SIGNAL_FLUID_NORMAL,
                                          SIGNAL_FLUID_NORMAL,
                                          SIGNAL_FLUID_NORMAL,
