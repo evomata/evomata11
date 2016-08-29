@@ -2,16 +2,16 @@ extern crate num;
 extern crate nalgebra as na;
 
 pub const TOTAL_FLUIDS: usize = 8;
-pub const NORMAL_DIFFUSION: [f64; TOTAL_FLUIDS] = [0.0000001, 2.0, 0.2, 1.0, 0.5, 0.5, 0.5, 0.5];
+pub const NORMAL_DIFFUSION: [f64; TOTAL_FLUIDS] = [0.0001, 4.0, 0.2, 2.0, 0.5, 0.5, 0.5, 0.5];
 pub const KILL_FLUID_NORMAL: f64 = 0.05;
 pub const KILL_FLUID_DECAY: f64 = 0.01;
 pub const KILL_FLUID_UPPER_THRESHOLD: f64 = 0.052;
 pub const KILL_FLUID_LOWER_THRESHOLD: f64 = 0.048;
 pub const SIGNAL_FLUID_NORMAL: f64 = 0.5;
 pub const SIGNAL_FLUID_DECAY: f64 = 0.001;
-pub const B_FOOD_RATE: f64 = 0.002;
+pub const B_FOOD_RATE: f64 = 0.005;
 
-const TIMESTEP: f64 = 0.4;
+const TIMESTEP: f64 = 0.2;
 
 #[derive(Default, Debug)]
 pub struct Solution {
