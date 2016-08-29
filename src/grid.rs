@@ -7,9 +7,10 @@ use noise::{Brownian2, perlin2};
 
 const SPAWN_RATE: f64 = 0.1;
 const CONSUMPTION: f64 = 0.04;
-const SURVIVAL_THRESHOLD: f64 = 0.1;
+const SURVIVAL_THRESHOLD: f64 = 0.0;
 const DEATH_RELEASE_COEFFICIENT: f64 = 0.5;
 const INHALE_CAP: usize = 1000000;
+const MOVEMENT_COST: usize = 1;
 
 const FLUID_CYCLES: usize = 6;
 
@@ -252,6 +253,9 @@ impl Grid {
                 if self.hex(x, y).delta.movement_attempts.len() == 1 {
                     let from_coord = self.hex(x, y).delta.movement_attempts[0];
                     self.hex_mut(x, y).cell = self.hex_mut(from_coord.0, from_coord.1).cell.take();
+                    if self.hex(x, y).cell.as_ref().unwrap().inhale >= MOVEMENT_COST {
+                        self.hex_mut(x, y).cell.as_mut().unwrap().inhale -= MOVEMENT_COST;
+                    }
                     // Handle mating.
                 } else if self.hex(x, y).delta.mate_attempts.len() == 1 {
                     let mate = self.hex(x, y).delta.mate_attempts[0].clone();
@@ -311,7 +315,8 @@ impl Grid {
         for hex in &mut self.tiles {
             if hex.cell.is_some() {
                 if hex.solution.fluids[2] > KILL_FLUID_UPPER_THRESHOLD ||
-                   hex.solution.fluids[2] < KILL_FLUID_LOWER_THRESHOLD {
+                   hex.solution.fluids[2] < KILL_FLUID_LOWER_THRESHOLD ||
+                   hex.cell.as_ref().unwrap().inhale == 0 {
                     hex.solution.fluids[0] += DEATH_RELEASE_COEFFICIENT * CONSUMPTION *
                                               hex.cell.as_ref().unwrap().inhale as f64;
                     hex.cell = None;
