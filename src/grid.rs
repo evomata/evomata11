@@ -239,6 +239,11 @@ impl Grid {
                                     -EXPLODE_AMOUNT
                                 };
                             }
+                            Some(Decision { choice: Choice::Suicide, .. }) => {
+                                if let Some(ref mut c) = this.cell {
+                                    c.inhale = 0;
+                                }
+                            }
                             _ => {}
                         }
                     }
