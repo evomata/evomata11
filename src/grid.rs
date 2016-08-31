@@ -5,12 +5,12 @@ use std::mem;
 use rand::{Isaac64Rng, Rng};
 use noise::{Brownian2, perlin2};
 
-const SPAWN_RATE: f64 = 0.005;
+const SPAWN_RATE: f64 = 0.003;
 const CONSUMPTION: f64 = 0.04;
 const SURVIVAL_THRESHOLD: f64 = 0.0;
 const DEATH_RELEASE_COEFFICIENT: f64 = 0.5;
-const INHALE_CAP: usize = 1000000;
-const MOVEMENT_COST: usize = 50;
+const INHALE_CAP: usize = 1000;
+const MOVEMENT_COST: usize = 55;
 
 const FLUID_CYCLES: usize = 6;
 
