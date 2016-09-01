@@ -18,7 +18,7 @@ dependencies = [
 
 [[package]]
 name = "android_glue"
-version = "0.2.0"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
@@ -235,7 +235,7 @@ name = "glutin"
 version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "android_glue 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "android_glue 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "cgl 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "cocoa 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "core-foundation 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -335,7 +335,7 @@ dependencies = [
 [[package]]
 name = "mli"
 version = "0.7.0"
-source = "git+https://github.com/vadixidav/mli#82454f7178dde6a3169db9f30899572bdf402895"
+source = "git+https://github.com/vadixidav/mli#97cb5aaa766e99d2dce79c5498d7e60e485cea97"
 dependencies = [
  "num 0.1.35 (registry+https://github.com/rust-lang/crates.io-index)",
  "rand 0.3.14 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -495,7 +495,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "serde"
-version = "0.8.4"
+version = "0.8.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
@@ -506,7 +506,7 @@ dependencies = [
  "dtoa 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "itoa 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "num-traits 0.1.35 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde 0.8.4 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 0.8.5 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]

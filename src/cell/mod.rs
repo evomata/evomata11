@@ -88,7 +88,7 @@ pub struct Decision {
     pub coefficients: [f64; TOTAL_FLUIDS],
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Cell {
     pub inhale: usize,
     pub brain: brain::Brain,

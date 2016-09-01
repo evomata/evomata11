@@ -32,6 +32,7 @@ struct Delta {
     mate_attempts: Vec<Mate>,
 }
 
+#[derive(Debug)]
 pub struct Hex {
     pub solution: Solution,
     pub cell: Option<Cell>,

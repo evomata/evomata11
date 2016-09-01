@@ -24,8 +24,14 @@ use num::One;
 
 use rand::{Isaac64Rng, SeedableRng};
 
+const DEFAULT_SCREEN_HEX_RATIO: f32 = 64.0;
+
 const GRID_WIDTH: usize = 192;
-const GRID_HEIGHT: usize = 124;
+const GRID_HEIGHT: usize = 125;
+
+// TODO: Figure out when lines are used and set it correctly.
+const SCROLL_LINES_RATIO: f32 = 0.707;
+const SCROLL_PIXELS_RATIO: f32 = 0.707;
 
 fn main() {
     let mut rng = Isaac64Rng::from_seed(&[2, 5, 3, 12454]);
@@ -35,12 +41,19 @@ fn main() {
     // window.set_cursor_state(glium::glutin::CursorState::Hide).ok().unwrap();
     let glowy = Renderer::new(&display);
 
+    let mut screen_hex_ratio = DEFAULT_SCREEN_HEX_RATIO;
+
+    let mut center = (0.5 * GRID_WIDTH as f32, 0.5 * GRID_HEIGHT as f32);
+    let mut last_mouse_pos = (0, 0);
+    let mut mouse_pressed = false;
+
     loop {
         use glium::Surface;
 
         // // Get dimensions
-        // let dims = display.get_framebuffer_dimensions();
-        // let hscale = dims.1 as f32 / dims.0 as f32;
+        let dims = display.get_framebuffer_dimensions();
+        // Multiply this by width coordinates to get normalized screen coordinates.
+        let hscale = dims.1 as f32 / dims.0 as f32;
 
         let mut target = display.draw();
         target.clear_color(0.0, 0.0, 0.0, 1.0);
@@ -48,9 +61,14 @@ fn main() {
         // Ratio of width/height in a 2d circle tight-pack or a hex grid.
         let width_height_ratio = 0.86602540378;
 
-        let projection = [[1.0 / (GRID_WIDTH as f32 + 1.0), 0.0, 0.0],
-                          [0.0, 1.0 / (GRID_HEIGHT as f32 + 1.0) / width_height_ratio, 0.0],
-                          [0.0, 0.0, 1.0]];
+        let (screen_width, screen_height) = (screen_hex_ratio / hscale, screen_hex_ratio);
+        let (hex_per_width_pixel, hex_per_height_pixel) =
+            (screen_width / dims.0 as f32, screen_height / width_height_ratio / dims.1 as f32);
+
+        let center_mouse_coord = (dims.0 as f32 / 2.0, dims.1 as f32 / 2.0);
+
+        let projection =
+            [[1.0 / screen_width, 0.0, 0.0], [0.0, 1.0 / screen_height, 0.0], [0.0, 0.0, 1.0]];
 
         let mut qbeziers = Vec::new();
 
@@ -62,16 +80,14 @@ fn main() {
                               0.6,
                               g.hex(x, y).color(),
                               &na::Isometry2::new(na::Vector2::new(if y % 2 == 0 {
-                                                                       1.0
+                                                                       1.5
                                                                    } else {
-                                                                       0.0
+                                                                       0.5
                                                                    } +
-                                                                   2.0 * (x as f32) +
-                                                                   0.5 -
-                                                                   (GRID_WIDTH as f32),
+                                                                   2.0 * (x as f32 - center.0),
                                                                    width_height_ratio *
-                                                                   (2.0 * (y as f32 + 0.5) -
-                                                                    (GRID_HEIGHT as f32))),
+                                                                   (2.0 *
+                                                                    (y as f32 - center.1 + 0.5))),
                                                   na::Vector1::new(0.0))
                                   .to_homogeneous());
 
@@ -81,16 +97,16 @@ fn main() {
                                   0.3,
                                   c.color(),
                                   &na::Isometry2::new(na::Vector2::new(if y % 2 == 0 {
-                                                                           1.0
+                                                                           1.5
                                                                        } else {
-                                                                           0.0
+                                                                           0.5
                                                                        } +
-                                                                       2.0 * (x as f32) +
-                                                                       0.5 -
-                                                                       (GRID_WIDTH as f32),
+                                                                       2.0 *
+                                                                       (x as f32 - center.0),
                                                                        width_height_ratio *
-                                                                       (2.0 * (y as f32 + 0.5) -
-                                                                        (GRID_HEIGHT as f32))),
+                                                                       (2.0 *
+                                                                        (y as f32 - center.1 +
+                                                                         0.5))),
                                                       na::Vector1::new(0.0))
                                       .to_homogeneous());
                 }
@@ -108,7 +124,8 @@ fn main() {
         target.finish().unwrap();
 
         for ev in display.poll_events() {
-            use glium::glutin::{Event, ElementState, VirtualKeyCode as VKC};
+            use glium::glutin::{Event, ElementState, MouseButton, MouseScrollDelta,
+                                VirtualKeyCode as VKC};
             match ev {
                 Event::Closed => return,
                 Event::KeyboardInput(ElementState::Pressed, _, Some(VKC::R)) => {
@@ -116,6 +133,47 @@ fn main() {
                 }
                 Event::KeyboardInput(ElementState::Pressed, _, Some(VKC::S)) => {
                     g.spawning = !g.spawning;
+                }
+                Event::MouseWheel(MouseScrollDelta::LineDelta(_, lines), _) => {
+                    screen_hex_ratio -= lines * SCROLL_LINES_RATIO;
+                }
+                Event::MouseWheel(MouseScrollDelta::PixelDelta(_, pixels), _) => {
+                    screen_hex_ratio -= pixels * SCROLL_PIXELS_RATIO;
+                }
+                Event::MouseMoved(x, y) => {
+                    if mouse_pressed {
+                        center.0 -= hex_per_width_pixel * (x - last_mouse_pos.0) as f32;
+                        center.1 += hex_per_height_pixel * (y - last_mouse_pos.1) as f32;
+                    }
+                    last_mouse_pos = (x, y);
+                }
+                Event::MouseInput(ElementState::Released, MouseButton::Left) => {
+                    let relative_coord = (last_mouse_pos.0 as f32 - center_mouse_coord.0,
+                                          last_mouse_pos.1 as f32 - center_mouse_coord.1);
+
+                    let hex = (center.0 + relative_coord.0 * hex_per_width_pixel,
+                               center.1 - relative_coord.1 * hex_per_height_pixel);
+                    // Adjust the width based on the height.
+                    let hex = (if hex.1 as isize % 2 == 0 {
+                        hex.0 - 0.25
+                    } else {
+                        hex.0 + 0.25
+                    },
+                               hex.1);
+                    if hex.0 > 0.0 && hex.0 < GRID_WIDTH as f32 && hex.1 > 0.0 &&
+                       hex.1 < GRID_HEIGHT as f32 {
+                        println!("{:?}", g.hex(hex.0 as usize, hex.1 as usize));
+                    }
+                }
+                Event::MouseInput(state, MouseButton::Right) => {
+                    match state {
+                        ElementState::Pressed => mouse_pressed = true,
+                        ElementState::Released => mouse_pressed = false,
+                    }
+                }
+                Event::Focused(_) => {
+                    // Always stop handling mouse press if we loose or gain focus.
+                    mouse_pressed = false;
                 }
                 _ => (),
             }

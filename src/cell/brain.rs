@@ -16,7 +16,7 @@ pub const DEFAULT_CROSSOVER_POINTS: usize = 1;
 pub const DEFAULT_INSTRUCTIONS: usize = 128;
 const MUTATE_PROBABILITY: f64 = 1.0;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Ins {
     _NOP,
     _ADD,
@@ -88,7 +88,7 @@ fn mutator(ins: &mut Ins, rng: &mut Isaac64Rng) {
     *ins = unsafe { mem::transmute(rng.gen_range::<u8>(0, Ins::MAX as u8)) };
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Decision {
     pub mate: i64,
     pub node: i64,
@@ -114,7 +114,7 @@ impl Default for Decision {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Brain {
     pub mep: mli::Mep<Ins,
                       Isaac64Rng,
