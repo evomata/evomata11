@@ -9,8 +9,7 @@ pub const KILL_FLUID_UPPER_THRESHOLD: f64 = 0.052;
 pub const KILL_FLUID_LOWER_THRESHOLD: f64 = 0.048;
 pub const SIGNAL_FLUID_NORMAL: f64 = 0.5;
 pub const SIGNAL_FLUID_DECAY: f64 = 0.001;
-// pub const B_FOOD_RATE: f64 = 0.01;
-pub const B_FOOD_RATE: f64 = 100.0;
+pub const B_FOOD_RATE: f64 = 0.012;
 
 const TIMESTEP: f64 = 0.2;
 
