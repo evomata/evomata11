@@ -12,6 +12,8 @@ extern crate glium;
 extern crate nalgebra;
 extern crate noise;
 extern crate mli;
+extern crate num_cpus;
+extern crate crossbeam;
 
 mod cell;
 mod fluid;
@@ -22,12 +24,14 @@ use nalgebra as na;
 use nalgebra::ToHomogeneous;
 use num::One;
 
+use std::sync::mpsc::channel;
+
 use rand::{Isaac64Rng, SeedableRng};
 
 const DEFAULT_SCREEN_HEX_RATIO: f32 = 64.0;
 
-const GRID_WIDTH: usize = 192;
-const GRID_HEIGHT: usize = 125;
+const GRID_WIDTH: usize = 192 * 3 / 2;
+const GRID_HEIGHT: usize = 125 * 3 / 2;
 
 // TODO: Figure out when lines are used and set it correctly.
 const SCROLL_LINES_RATIO: f32 = 0.707;
@@ -70,54 +74,77 @@ fn main() {
         let projection =
             [[1.0 / screen_width, 0.0, 0.0], [0.0, 1.0 / screen_height, 0.0], [0.0, 0.0, 1.0]];
 
-        let mut qbeziers = Vec::new();
+        let (render_tx, render_rx) = channel();
 
-        // Render nodes
-        for x in 0..GRID_WIDTH {
-            for y in 0..GRID_HEIGHT {
-                append_circle(&mut qbeziers,
-                              0.6,
-                              0.6,
-                              g.hex(x, y).color(),
-                              &na::Isometry2::new(na::Vector2::new(if y % 2 == 0 {
-                                                                       1.5
-                                                                   } else {
-                                                                       0.5
-                                                                   } +
-                                                                   2.0 * (x as f32 - center.0),
-                                                                   width_height_ratio *
-                                                                   (2.0 *
-                                                                    (y as f32 - center.1 + 0.5))),
-                                                  na::Vector1::new(0.0))
-                                  .to_homogeneous());
+        let numcpus = num_cpus::get();
 
-                if let Some(ref c) = g.hex(x, y).cell {
-                    append_circle(&mut qbeziers,
-                                  0.3,
-                                  0.3,
-                                  c.color(),
-                                  &na::Isometry2::new(na::Vector2::new(if y % 2 == 0 {
-                                                                           1.5
-                                                                       } else {
-                                                                           0.5
-                                                                       } +
-                                                                       2.0 *
-                                                                       (x as f32 - center.0),
-                                                                       width_height_ratio *
-                                                                       (2.0 *
-                                                                        (y as f32 - center.1 +
-                                                                         0.5))),
-                                                      na::Vector1::new(0.0))
-                                      .to_homogeneous());
-                }
+        crossbeam::scope(|scope| {
+            let g = &g;
+            // Render nodes
+            for i in 0..numcpus {
+                let render_tx = render_tx.clone();
+                scope.spawn(move || {
+                        let mut v = Vec::new();
+                        for x in 0..GRID_WIDTH {
+                            for y in (GRID_HEIGHT * i / numcpus)..(GRID_HEIGHT * (i + 1) / numcpus) {
+                                append_circle(&mut v,
+                                              0.6,
+                                              0.6,
+                                              g.hex(x, y).color(),
+                                              &na::Isometry2::new(na::Vector2::new(if y % 2 == 0 {
+                                                                                       1.5
+                                                                                   } else {
+                                                                                       0.5
+                                                                                   } +
+                                                                                   2.0 *
+                                                                                   (x as f32 -
+                                                                                    center.0),
+                                                                                   width_height_ratio *
+                                                                                   (2.0 *
+                                                                                    (y as f32 -
+                                                                                     center.1 +
+                                                                                     0.5))),
+                                                                  na::Vector1::new(0.0))
+                                                  .to_homogeneous());
+
+                                if let Some(ref c) = g.hex(x, y).cell {
+                                    append_circle(&mut v,
+                                                  0.3,
+                                                  0.3,
+                                                  c.color(),
+                                                  &na::Isometry2::new(na::Vector2::new(if y % 2 == 0 {
+                                                                                           1.5
+                                                                                       } else {
+                                                                                           0.5
+                                                                                       } +
+                                                                                       2.0 *
+                                                                                       (x as f32 -
+                                                                                        center.0),
+                                                                                       width_height_ratio *
+                                                                                       (2.0 *
+                                                                                        (y as f32 -
+                                                                                         center.1 +
+                                                                                         0.5))),
+                                                                      na::Vector1::new(0.0))
+                                                      .to_homogeneous());
+                                }
+                            }
+                        }
+                        render_tx.send(v).unwrap_or_else(|_| panic!("Render channel closed."));
+                    });
             }
-        }
 
-
-        glowy.render_qbeziers_flat(&mut target,
-                                   na::Matrix3::one().as_ref().clone(),
-                                   projection,
-                                   &qbeziers[..]);
+            for _ in 0..numcpus {
+                glowy.render_qbeziers_flat(&mut target,
+                                           na::Matrix3::one().as_ref().clone(),
+                                           projection,
+                                           &render_rx.recv().unwrap_or_else(|e| {
+                                               panic!("Error: Render threads unexpectedly closed: \
+                                                       {}",
+                                                      e)
+                                           })[..]);
+            }
+        });
 
         g.cycle(&mut rng);
 

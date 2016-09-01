@@ -15,5 +15,6 @@ custom_derive = "0.1.5"
 enum_derive = "0.1.7"
 enum_primitive = "0.1.0"
 noise = "0.2.0"
+num_cpus = "1.0.0"
 
 mli = {git = "https://github.com/vadixidav/mli"}

@@ -4,13 +4,17 @@ use itertools::Itertools;
 use std::mem;
 use rand::{Isaac64Rng, Rng};
 use noise::{Brownian2, perlin2};
+use num_cpus;
+use crossbeam;
 
-const SPAWN_RATE: f64 = 0.003;
+// const SPAWN_RATE: f64 = 0.003;
+const SPAWN_RATE: f64 = 1.0;
 const CONSUMPTION: f64 = 0.04;
 const SURVIVAL_THRESHOLD: f64 = 0.0;
 const DEATH_RELEASE_COEFFICIENT: f64 = 0.5;
 const INHALE_CAP: usize = 1000;
-const MOVEMENT_COST: usize = 55;
+// const MOVEMENT_COST: usize = 55;
+const MOVEMENT_COST: usize = 1;
 
 const FLUID_CYCLES: usize = 6;
 
@@ -39,6 +43,11 @@ pub struct Hex {
     pub decision: Option<Decision>,
     delta: Delta,
 }
+
+struct GridCont(*mut Grid);
+
+unsafe impl Sync for GridCont {}
+unsafe impl Send for GridCont {}
 
 impl Hex {
     pub fn color(&self) -> [f32; 4] {
@@ -147,110 +156,130 @@ impl Grid {
     }
 
     fn cycle_cells(&mut self) {
-        for x in 0..self.width {
-            for y in 0..self.height {
-                let (this, neighbors) = self.hex_and_neighbors(x, y);
-                this.decision = if let Some(ref mut this_cell) = this.cell {
-                    let neighbor_presents = [neighbors[0].cell.is_some(),
-                                             neighbors[1].cell.is_some(),
-                                             neighbors[2].cell.is_some(),
-                                             neighbors[3].cell.is_some(),
-                                             neighbors[4].cell.is_some(),
-                                             neighbors[5].cell.is_some()];
+        let g = GridCont(self as *mut Grid);
+        let g = &g;
+        let numcpus = num_cpus::get();
+        crossbeam::scope(|scope| {
+            for i in 0..numcpus {
+                scope.spawn(move || {
+                    let g: &mut Grid = unsafe { mem::transmute(g.0) };
+                    for x in 0..g.width {
+                        for y in (g.height * i / numcpus)..(g.height * (i + 1) / numcpus) {
+                            let (this, neighbors) = g.hex_and_neighbors(x, y);
+                            this.decision = if let Some(ref mut this_cell) = this.cell {
+                                let neighbor_presents = [neighbors[0].cell.is_some(),
+                                                         neighbors[1].cell.is_some(),
+                                                         neighbors[2].cell.is_some(),
+                                                         neighbors[3].cell.is_some(),
+                                                         neighbors[4].cell.is_some(),
+                                                         neighbors[5].cell.is_some()];
 
-                    Some(this_cell.decide([&this.solution.fluids,
-                                           &neighbors[0].solution.fluids,
-                                           &neighbors[1].solution.fluids,
-                                           &neighbors[2].solution.fluids,
-                                           &neighbors[3].solution.fluids,
-                                           &neighbors[4].solution.fluids,
-                                           &neighbors[5].solution.fluids],
-                                          &neighbor_presents))
-                } else {
-                    None
-                }
+                                Some(this_cell.decide([&this.solution.fluids,
+                                                       &neighbors[0].solution.fluids,
+                                                       &neighbors[1].solution.fluids,
+                                                       &neighbors[2].solution.fluids,
+                                                       &neighbors[3].solution.fluids,
+                                                       &neighbors[4].solution.fluids,
+                                                       &neighbors[5].solution.fluids],
+                                                      &neighbor_presents))
+                            } else {
+                                None
+                            }
+                        }
+                    }
+                });
             }
-        }
+        });
     }
 
     fn cycle_decisions(&mut self, rng: &mut Isaac64Rng) {
+        let g = GridCont(self as *mut Grid);
+        let g = &g;
+        let numcpus = num_cpus::get();
         // Compute the deltas resulting from the decision.
-        for x in 0..self.width {
-            for y in 0..self.height {
-                let (width, height) = (self.width, self.height);
-                let (this, neighbors) = self.hex_and_neighbors(x, y);
-                // Clear the movements from the previous cycle.
-                this.delta.movement_attempts.clear();
-                this.delta.mate_attempts.clear();
-                this.solution.coefficients = if let Some(ref decision) = this.decision {
-                    decision.coefficients
-                } else {
-                    // Set the diffusion coefficients to the normal values.
-                    NORMAL_DIFFUSION
-                };
+        crossbeam::scope(|scope| {
+            for i in 0..numcpus {
+                scope.spawn(move || {
+                    let g: &mut Grid = unsafe { mem::transmute(g.0) };
+                    for x in 0..g.width {
+                        for y in (g.height * i / numcpus)..(g.height * (i + 1) / numcpus) {
+                            let (width, height) = (g.width, g.height);
+                            let (this, neighbors) = g.hex_and_neighbors(x, y);
+                            // Clear the movements from the previous cycle.
+                            this.delta.movement_attempts.clear();
+                            this.delta.mate_attempts.clear();
+                            this.solution.coefficients = if let Some(ref decision) = this.decision {
+                                decision.coefficients
+                            } else {
+                                // Set the diffusion coefficients to the normal values.
+                                NORMAL_DIFFUSION
+                            };
 
-                // Only add movements here if no cell is present.
-                if this.cell.is_none() {
-                    // Add any neighbor movements to the movement_attempts vector.
-                    for (n, &facing) in neighbors.iter().zip(&[Direction::DownLeft,
-                                                               Direction::DownRight,
-                                                               Direction::Right,
-                                                               Direction::UpRight,
-                                                               Direction::UpLeft,
-                                                               Direction::Left]) {
-                        match n.decision {
-                            Some(Decision { choice: Choice::Move(direction), .. }) => {
-                                // It attempted to move into this hex cell.
-                                if facing == direction {
-                                    this.delta
-                                        .movement_attempts
-                                        .push(in_direction(x, y, width, height, facing.flip()));
+                            // Only add movements here if no cell is present.
+                            if this.cell.is_none() {
+                                // Add any neighbor movements to the movement_attempts vector.
+                                for (n, &facing) in neighbors.iter().zip(&[Direction::DownLeft,
+                                                                           Direction::DownRight,
+                                                                           Direction::Right,
+                                                                           Direction::UpRight,
+                                                                           Direction::UpLeft,
+                                                                           Direction::Left]) {
+                                    match n.decision {
+                                        Some(Decision { choice: Choice::Move(direction), .. }) => {
+                                            // It attempted to move into this hex cell.
+                                            if facing == direction {
+                                                this.delta
+                                                    .movement_attempts
+                                                    .push(in_direction(x, y, width, height, facing.flip()));
 
-                                    // No need to continue if we reach 2 attempts.
-                                    if this.delta.movement_attempts.len() == 2 {
-                                        break;
+                                                // No need to continue if we reach 2 attempts.
+                                                if this.delta.movement_attempts.len() == 2 {
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                        Some(Decision { choice: Choice::Divide { mate, spawn }, .. }) => {
+                                            // It attempted to spawn into this hex cell.
+                                            if facing == spawn {
+                                                let source = in_direction(x, y, width, height, facing.flip());;
+                                                this.delta
+                                                    .mate_attempts
+                                                    .push(Mate {
+                                                        mate: in_direction(source.0,
+                                                                           source.1,
+                                                                           width,
+                                                                           height,
+                                                                           mate),
+                                                        source: source,
+                                                    });
+
+                                                // No need to continue if we reach 2 attempts.
+                                                if this.delta.mate_attempts.len() == 2 {
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                        Some(Decision { choice: Choice::Explode(way), .. }) => {
+                                            this.solution.diffuse[2] += if way {
+                                                EXPLODE_AMOUNT
+                                            } else {
+                                                -EXPLODE_AMOUNT
+                                            };
+                                        }
+                                        Some(Decision { choice: Choice::Suicide, .. }) => {
+                                            if let Some(ref mut c) = this.cell {
+                                                c.inhale = 0;
+                                            }
+                                        }
+                                        _ => {}
                                     }
                                 }
                             }
-                            Some(Decision { choice: Choice::Divide { mate, spawn }, .. }) => {
-                                // It attempted to spawn into this hex cell.
-                                if facing == spawn {
-                                    let source = in_direction(x, y, width, height, facing.flip());;
-                                    this.delta
-                                        .mate_attempts
-                                        .push(Mate {
-                                            mate: in_direction(source.0,
-                                                               source.1,
-                                                               width,
-                                                               height,
-                                                               mate),
-                                            source: source,
-                                        });
-
-                                    // No need to continue if we reach 2 attempts.
-                                    if this.delta.mate_attempts.len() == 2 {
-                                        break;
-                                    }
-                                }
-                            }
-                            Some(Decision { choice: Choice::Explode(way), .. }) => {
-                                this.solution.diffuse[2] += if way {
-                                    EXPLODE_AMOUNT
-                                } else {
-                                    -EXPLODE_AMOUNT
-                                };
-                            }
-                            Some(Decision { choice: Choice::Suicide, .. }) => {
-                                if let Some(ref mut c) = this.cell {
-                                    c.inhale = 0;
-                                }
-                            }
-                            _ => {}
                         }
                     }
-                }
+                });
             }
-        }
+        });
 
         // Perform the deltas.
         for x in 0..self.width {
@@ -338,57 +367,91 @@ impl Grid {
     }
 
     fn cycle_fluids(&mut self) {
+        let g = GridCont(self as *mut Grid);
+        let g = &g;
+        let numcpus = num_cpus::get();
         // Then update diffusion.
-        for x in 0..self.width {
-            for y in 0..self.height {
-                let (this, neighbors) = self.hex_and_neighbors(x, y);
+        crossbeam::scope(|scope| {
+            for i in 0..numcpus {
+                scope.spawn(move || {
+                    let g: &mut Grid = unsafe { mem::transmute(g.0) };
+                    for x in 0..g.width {
+                        for y in (g.height * i / numcpus)..(g.height * (i + 1) / numcpus) {
+                            let (this, neighbors) = g.hex_and_neighbors(x, y);
 
-                for n in &neighbors {
-                    this.solution.diffuse_from(&n.solution);
-                }
+                            for n in &neighbors {
+                                this.solution.diffuse_from(&n.solution);
+                            }
+                        }
+                    }
+                });
             }
-        }
+        });
 
         // Finish the cycle.
-        for hex in &mut self.tiles {
-            hex.solution.end_cycle();
-        }
+        crossbeam::scope(|scope| {
+            for i in 0..numcpus {
+                scope.spawn(move || {
+                    let g: &mut Grid = unsafe { mem::transmute(g.0) };
+                    for x in 0..g.width {
+                        for y in (g.height * i / numcpus)..(g.height * (i + 1) / numcpus) {
+                            g.hex_mut(x, y).solution.end_cycle();
+                        }
+                    }
+                });
+            }
+        });
     }
 
     fn cycle_death(&mut self) {
+        let g = GridCont(self as *mut Grid);
+        let g = &g;
+        let numcpus = num_cpus::get();
         // Finish the cycle.
-        for hex in &mut self.tiles {
-            if hex.cell.is_some() {
-                if hex.solution.fluids[2] > KILL_FLUID_UPPER_THRESHOLD ||
-                   hex.solution.fluids[2] < KILL_FLUID_LOWER_THRESHOLD ||
-                   hex.cell.as_ref().unwrap().inhale == 0 {
-                    hex.solution.fluids[0] += DEATH_RELEASE_COEFFICIENT * CONSUMPTION *
-                                              hex.cell.as_ref().unwrap().inhale as f64;
-                    hex.cell = None;
-                } else if hex.solution.fluids[0] <= CONSUMPTION {
-                    if hex.cell.as_ref().unwrap().inhale != 0 {
-                        hex.cell.as_mut().unwrap().inhale -= 1;
-                    } else {
-                        hex.cell = None;
-                    }
-                } else {
-                    hex.solution.fluids[0] -= CONSUMPTION;
-                    if hex.solution.fluids[0] < SURVIVAL_THRESHOLD {
-                        if hex.cell.as_ref().unwrap().inhale != 0 {
-                            hex.cell.as_mut().unwrap().inhale -= 1;
-                        } else {
-                            hex.solution.fluids[0] += DEATH_RELEASE_COEFFICIENT * CONSUMPTION *
-                                                      hex.cell.as_ref().unwrap().inhale as f64;
-                            hex.cell = None;
+        crossbeam::scope(|scope| {
+            for i in 0..numcpus {
+                scope.spawn(move || {
+                    let g: &mut Grid = unsafe { mem::transmute(g.0) };
+                    for x in 0..g.width {
+                        for y in (g.height * i / numcpus)..(g.height * (i + 1) / numcpus) {
+                            let hex = g.hex_mut(x, y);
+                            if hex.cell.is_some() {
+                                if hex.solution.fluids[2] > KILL_FLUID_UPPER_THRESHOLD ||
+                                   hex.solution.fluids[2] < KILL_FLUID_LOWER_THRESHOLD ||
+                                   hex.cell.as_ref().unwrap().inhale == 0 {
+                                    hex.solution.fluids[0] +=
+                                        DEATH_RELEASE_COEFFICIENT * CONSUMPTION *
+                                        hex.cell.as_ref().unwrap().inhale as f64;
+                                    hex.cell = None;
+                                } else if hex.solution.fluids[0] <= CONSUMPTION {
+                                    if hex.cell.as_ref().unwrap().inhale != 0 {
+                                        hex.cell.as_mut().unwrap().inhale -= 1;
+                                    } else {
+                                        hex.cell = None;
+                                    }
+                                } else {
+                                    hex.solution.fluids[0] -= CONSUMPTION;
+                                    if hex.solution.fluids[0] < SURVIVAL_THRESHOLD {
+                                        if hex.cell.as_ref().unwrap().inhale != 0 {
+                                            hex.cell.as_mut().unwrap().inhale -= 1;
+                                        } else {
+                                            hex.solution.fluids[0] +=
+                                                DEATH_RELEASE_COEFFICIENT * CONSUMPTION *
+                                                hex.cell.as_ref().unwrap().inhale as f64;
+                                            hex.cell = None;
+                                        }
+                                    } else {
+                                        if hex.cell.as_ref().unwrap().inhale < INHALE_CAP {
+                                            hex.cell.as_mut().unwrap().inhale += 1;
+                                        }
+                                    }
+                                }
+                            }
                         }
-                    } else {
-                        if hex.cell.as_ref().unwrap().inhale < INHALE_CAP {
-                            hex.cell.as_mut().unwrap().inhale += 1;
-                        }
                     }
-                }
+                });
             }
-        }
+        });
     }
 }
 
