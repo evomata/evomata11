@@ -9,7 +9,7 @@ use num_cpus;
 use crossbeam;
 
 const SPAWN_DENSITY: f64 = 0.00001;
-const SPAWN_RATE: f64 = SPAWN_DENSITY / GRID_WIDTH as f64 / GRID_HEIGHT as f64;
+const SPAWN_RATE: f64 = SPAWN_DENSITY * GRID_WIDTH as f64 * GRID_HEIGHT as f64;
 const CONSUMPTION: f64 = 0.04;
 const SURVIVAL_THRESHOLD: f64 = 0.0;
 const DEATH_RELEASE_COEFFICIENT: f64 = 0.5;
