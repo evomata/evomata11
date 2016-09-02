@@ -1,5 +1,6 @@
 use super::cell::*;
 use super::fluid::*;
+use super::{GRID_WIDTH, GRID_HEIGHT};
 use itertools::Itertools;
 use std::mem;
 use rand::{Isaac64Rng, Rng};
@@ -7,7 +8,8 @@ use noise::{Brownian2, perlin2};
 use num_cpus;
 use crossbeam;
 
-const SPAWN_RATE: f64 = 0.005;
+const SPAWN_DENSITY: f64 = 0.00001;
+const SPAWN_RATE: f64 = SPAWN_DENSITY / GRID_WIDTH as f64 / GRID_HEIGHT as f64;
 const CONSUMPTION: f64 = 0.04;
 const SURVIVAL_THRESHOLD: f64 = 0.0;
 const DEATH_RELEASE_COEFFICIENT: f64 = 0.5;
