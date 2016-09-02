@@ -61,8 +61,13 @@ fn main() {
         // Multiply this by width coordinates to get normalized screen coordinates.
         let hscale = dims.1 as f32 / dims.0 as f32;
 
-        let mut target = display.draw();
-        target.clear_color(0.0, 0.0, 0.0, 1.0);
+        // Don't even vsync if rendering is disabled.
+        let mut target = if rendering_enabled {
+            Some(display.draw())
+        } else {
+            None
+        };
+        target.as_mut().map_or_else(|| {}, |t| t.clear_color(0.0, 0.0, 0.0, 1.0));
 
         // Ratio of width/height in a 2d circle tight-pack or a hex grid.
         let width_height_ratio = 0.86602540378;
@@ -139,7 +144,7 @@ fn main() {
                 }
 
                 for _ in 0..numcpus {
-                    glowy.render_qbeziers_flat(&mut target,
+                    glowy.render_qbeziers_flat(target.as_mut().unwrap(),
                                                na::Matrix3::one().as_ref().clone(),
                                                projection,
                                                &render_rx.recv().unwrap_or_else(|e| {
@@ -153,7 +158,10 @@ fn main() {
 
         g.cycle(&mut rng);
 
-        target.finish().unwrap();
+        // Don't even vsync if rendering is disabled.
+        if rendering_enabled {
+            target.unwrap().finish().unwrap();
+        }
 
         for ev in display.poll_events() {
             use glium::glutin::{Event, ElementState, MouseButton, MouseScrollDelta,
