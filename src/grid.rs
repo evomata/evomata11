@@ -8,13 +8,13 @@ use noise::{Brownian2, perlin2};
 use num_cpus;
 use crossbeam;
 
-const SPAWN_DENSITY: f64 = 0.00001;
+const SPAWN_DENSITY: f64 = 0.000001;
 const SPAWN_RATE: f64 = SPAWN_DENSITY * GRID_WIDTH as f64 * GRID_HEIGHT as f64;
 const CONSUMPTION: f64 = 0.04;
 const SURVIVAL_THRESHOLD: f64 = 0.0;
 const DEATH_RELEASE_COEFFICIENT: f64 = 0.5;
 const INHALE_CAP: usize = 1000;
-const MOVEMENT_COST: usize = 55;
+const MOVEMENT_COST: usize = 58;
 
 const FLUID_CYCLES: usize = 6;
 
