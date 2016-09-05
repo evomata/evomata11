@@ -17,4 +17,4 @@ enum_primitive = "0.1.0"
 noise = "0.2.0"
 num_cpus = "1.0.0"
 
-mli = {git = "https://github.com/vadixidav/mli"}
+mli = {git = "https://github.com/vadixidav/mli", rev = "97cb5aaa766e99d2dce79c5498d7e60e485cea97"}

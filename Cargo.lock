@@ -9,7 +9,7 @@ dependencies = [
  "glium 0.15.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "glowygraph 0.7.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "itertools 0.4.18 (registry+https://github.com/rust-lang/crates.io-index)",
- "mli 0.7.0 (git+https://github.com/vadixidav/mli)",
+ "mli 0.7.0 (git+https://github.com/vadixidav/mli?rev=97cb5aaa766e99d2dce79c5498d7e60e485cea97)",
  "nalgebra 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "noise 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "num 0.1.35 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -336,7 +336,7 @@ dependencies = [
 [[package]]
 name = "mli"
 version = "0.7.0"
-source = "git+https://github.com/vadixidav/mli#97cb5aaa766e99d2dce79c5498d7e60e485cea97"
+source = "git+https://github.com/vadixidav/mli?rev=97cb5aaa766e99d2dce79c5498d7e60e485cea97#97cb5aaa766e99d2dce79c5498d7e60e485cea97"
 dependencies = [
  "num 0.1.35 (registry+https://github.com/rust-lang/crates.io-index)",
  "rand 0.3.14 (registry+https://github.com/rust-lang/crates.io-index)",
