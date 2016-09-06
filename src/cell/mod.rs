@@ -91,6 +91,7 @@ pub struct Decision {
 #[derive(Clone, Debug)]
 pub struct Cell {
     pub inhale: usize,
+    pub suicide: bool,
     pub brain: brain::Brain,
     turn: usize,
 }
@@ -99,6 +100,7 @@ impl Cell {
     pub fn new(rng: &mut Isaac64Rng) -> Self {
         Cell {
             inhale: INITIAL_INHALE,
+            suicide: false,
             brain: brain::Brain::new(rng),
             turn: rng.gen_range(0, 6),
         }
@@ -410,6 +412,7 @@ impl Cell {
         self.inhale /= 2;
         Cell {
             inhale: self.inhale,
+            suicide: false,
             brain: self.brain.mate(&other.brain, rng),
             turn: self.turn,
         }
@@ -419,6 +422,7 @@ impl Cell {
         self.inhale /= 2;
         Cell {
             inhale: self.inhale,
+            suicide: false,
             brain: self.brain.divide(rng),
             turn: self.turn,
         }

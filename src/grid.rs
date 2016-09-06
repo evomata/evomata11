@@ -268,7 +268,7 @@ impl Grid {
                                         }
                                         Some(Decision { choice: Choice::Suicide, .. }) => {
                                             if let Some(ref mut c) = this.cell {
-                                                c.inhale = 0;
+                                                c.suicide = true;
                                             }
                                         }
                                         _ => {}
@@ -416,7 +416,8 @@ impl Grid {
                         for y in (g.height * i / numcpus)..(g.height * (i + 1) / numcpus) {
                             let hex = g.hex_mut(x, y);
                             if hex.cell.is_some() {
-                                if hex.solution.fluids[2] > KILL_FLUID_UPPER_THRESHOLD ||
+                                if hex.cell.as_ref().unwrap().suicide ||
+                                   hex.solution.fluids[2] > KILL_FLUID_UPPER_THRESHOLD ||
                                    hex.solution.fluids[2] < KILL_FLUID_LOWER_THRESHOLD ||
                                    hex.cell.as_ref().unwrap().inhale == 0 {
                                     hex.solution.fluids[0] +=
