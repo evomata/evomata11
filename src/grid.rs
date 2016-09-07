@@ -8,19 +8,21 @@ use noise::{Brownian2, perlin2};
 use num_cpus;
 use crossbeam;
 
-const SPAWN_DENSITY: f64 = 0.000001;
+// const SPAWN_DENSITY: f64 = 0.000001;
+const SPAWN_DENSITY: f64 = 0.001;
 const SPAWN_RATE: f64 = SPAWN_DENSITY * GRID_WIDTH as f64 * GRID_HEIGHT as f64;
 const CONSUMPTION: f64 = 0.04;
 const SURVIVAL_THRESHOLD: f64 = 0.0;
-const DEATH_RELEASE_COEFFICIENT: f64 = 0.5;
+const DEATH_RELEASE_COEFFICIENT: f64 = 1.0;
 const INHALE_CAP: usize = 1000;
-const MOVEMENT_COST: usize = 145;
+const MOVEMENT_COST: usize = 80;
+const EXPLODE_REQUIREMENT: usize = 200;
 
 const FLUID_CYCLES: usize = 6;
 
 const KILL_FLUID_COLOR_NORMAL: f64 = 0.01;
 const SIGNAL_FLUID_COLOR_NORMAL: f64 = 0.2;
-const FOOD_FLUID_COLOR_NORMAL: f64 = 400.0;
+const FOOD_FLUID_COLOR_NORMAL: f64 = 50.0;
 
 const EXPLODE_AMOUNT: f64 = 0.1;
 
@@ -260,11 +262,15 @@ impl Grid {
                                             }
                                         }
                                         Some(Decision { choice: Choice::Explode(way), .. }) => {
-                                            this.solution.diffuse[2] += if way {
-                                                EXPLODE_AMOUNT
-                                            } else {
-                                                -EXPLODE_AMOUNT
-                                            };
+                                            if let Some(ref mut c) = this.cell {
+                                                if c.inhale >= EXPLODE_REQUIREMENT {
+                                                    this.solution.diffuse[2] += if way {
+                                                        EXPLODE_AMOUNT
+                                                    } else {
+                                                        -EXPLODE_AMOUNT
+                                                    };
+                                                }
+                                            }
                                         }
                                         Some(Decision { choice: Choice::Suicide, .. }) => {
                                             if let Some(ref mut c) = this.cell {
