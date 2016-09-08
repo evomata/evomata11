@@ -2,7 +2,10 @@
 The 11th cellular automata created with the sole purpose of creating emergent phenomena through evolution.
 Uses a gray-scott reaction diffusion equation along with genetic algorithms.
 
-### Movement is taxed (now)
+### Dying cells release food, cells can explode to kill enemies, signaling chemicals are added
+![Image](http://i.imgur.com/oi9zGy4.png)
+
+### Movement is taxed
 ![Image](http://i.imgur.com/v4ykJ9Q.png)
 
 ### Chemical B is made food velocity
