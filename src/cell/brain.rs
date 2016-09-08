@@ -13,7 +13,7 @@ pub const STATIC_OUTPUTS: usize = 8 + 7 + 13 + 1 + 6 + 1 + 1;
 pub const TOTAL_OUTPUTS: usize = STATIC_OUTPUTS + TOTAL_MEMORY;
 pub const DEFAULT_MUTATE_SIZE: usize = 8;
 pub const DEFAULT_CROSSOVER_POINTS: usize = 1;
-pub const DEFAULT_INSTRUCTIONS: usize = 128;
+pub const DEFAULT_INSTRUCTIONS: usize = 512;
 const MUTATE_PROBABILITY: f64 = 1.0;
 
 #[derive(Clone, Debug)]
