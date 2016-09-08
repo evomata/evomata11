@@ -8,8 +8,7 @@ use noise::{Brownian2, perlin2};
 use num_cpus;
 use crossbeam;
 
-// const SPAWN_DENSITY: f64 = 0.000001;
-const SPAWN_DENSITY: f64 = 0.001;
+const SPAWN_DENSITY: f64 = 0.000001;
 const SPAWN_RATE: f64 = SPAWN_DENSITY * GRID_WIDTH as f64 * GRID_HEIGHT as f64;
 const CONSUMPTION: f64 = 0.04;
 const SURVIVAL_THRESHOLD: f64 = 0.0;
@@ -464,7 +463,7 @@ impl Grid {
 
 fn randomizing_vec(width: usize, height: usize, rng: &mut Isaac64Rng) -> Vec<Hex> {
     let seeds = [rng.gen(), rng.gen()];
-    let noise = Brownian2::new(perlin2, 4).wavelength(64.0);
+    let noise = Brownian2::new(perlin2, 4).wavelength(16.0);
     (0..height)
         .cartesian_product((0..width))
         .map(|(x, y)| {

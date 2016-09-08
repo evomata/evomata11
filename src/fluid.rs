@@ -2,7 +2,7 @@ extern crate num;
 extern crate nalgebra as na;
 
 pub const TOTAL_FLUIDS: usize = 8;
-pub const NORMAL_DIFFUSION: [f64; TOTAL_FLUIDS] = [0.0004, 4.0, 0.2, 2.0, 0.5, 0.5, 0.5, 0.5];
+pub const NORMAL_DIFFUSION: [f64; TOTAL_FLUIDS] = [0.0004, 1.0, 0.2, 0.5, 0.5, 0.5, 0.5, 0.5];
 pub const KILL_FLUID_NORMAL: f64 = 0.05;
 pub const KILL_FLUID_DECAY: f64 = 0.01;
 pub const KILL_FLUID_UPPER_THRESHOLD: f64 = 0.052;
