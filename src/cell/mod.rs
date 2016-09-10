@@ -390,7 +390,8 @@ impl Cell {
             },
             coefficients: {
                 let mut ncoef = [0.0; TOTAL_FLUIDS];
-                for i in 0..TOTAL_FLUIDS {
+                // Handle normal fluids.
+                for i in 0..4 {
                     let f = coefficients[i];
                     ncoef[i] = if f.is_normal() {
                         let nf = sig(f);
@@ -401,6 +402,15 @@ impl Cell {
                         }
                     } else {
                         NORMAL_DIFFUSION[i]
+                    };
+                }
+                // Handle signal fluids.
+                for i in 4..TOTAL_FLUIDS {
+                    let f = coefficients[i];
+                    ncoef[i] = if f.is_normal() {
+                        sig(f)
+                    } else {
+                        0.0
                     };
                 }
                 ncoef

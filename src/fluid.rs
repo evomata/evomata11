@@ -8,15 +8,16 @@ pub const NORMAL_DIFFUSION: [f64; TOTAL_FLUIDS] = [0.0004 * ACCURACY,
                                                    1.0,
                                                    0.5,
                                                    0.2 * ACCURACY,
-                                                   0.5 * ACCURACY,
-                                                   0.5 * ACCURACY,
-                                                   0.5 * ACCURACY,
-                                                   0.5 * ACCURACY];
+                                                   SIGNAL_FLUID_DIFFUSION * ACCURACY,
+                                                   SIGNAL_FLUID_DIFFUSION * ACCURACY,
+                                                   SIGNAL_FLUID_DIFFUSION * ACCURACY,
+                                                   SIGNAL_FLUID_DIFFUSION * ACCURACY];
 pub const KILL_FLUID_NORMAL: f64 = 0.05;
 pub const KILL_FLUID_DECAY: f64 = 0.01 * ACCURACY;
 pub const KILL_FLUID_UPPER_THRESHOLD: f64 = 0.052;
 pub const KILL_FLUID_LOWER_THRESHOLD: f64 = 0.048;
-pub const SIGNAL_FLUID_NORMAL: f64 = 0.5;
+pub const SIGNAL_FLUID_PRODUCTION: f64 = 0.5;
+pub const SIGNAL_FLUID_DIFFUSION: f64 = 0.01;
 pub const SIGNAL_FLUID_DECAY: f64 = 0.00001 * ACCURACY;
 pub const B_FOOD_RATE: f64 = 0.003 * ACCURACY;
 
@@ -53,10 +54,10 @@ impl Solution {
          -a * b * b + f * (1.0 - a),
          a * b * b - (k + f) * b,
          KILL_FLUID_DECAY * (KILL_FLUID_NORMAL - kill),
-         SIGNAL_FLUID_DECAY * (SIGNAL_FLUID_NORMAL - self.fluids[4]),
-         SIGNAL_FLUID_DECAY * (SIGNAL_FLUID_NORMAL - self.fluids[5]),
-         SIGNAL_FLUID_DECAY * (SIGNAL_FLUID_NORMAL - self.fluids[6]),
-         SIGNAL_FLUID_DECAY * (SIGNAL_FLUID_NORMAL - self.fluids[7])]
+         -SIGNAL_FLUID_DECAY * self.fluids[4],
+         -SIGNAL_FLUID_DECAY * self.fluids[5],
+         -SIGNAL_FLUID_DECAY * self.fluids[6],
+         -SIGNAL_FLUID_DECAY * self.fluids[7]]
     }
 
     pub fn diffuse_from(&mut self, other: &Solution, dtype: DiffusionType) {
@@ -73,7 +74,7 @@ impl Solution {
             }
             DiffusionType::FlatSignals => {
                 for i in 4..TOTAL_FLUIDS {
-                    self.diffuse[i] += SIGNAL_FLUID_NORMAL * other.coefficients[i] / 6.0;
+                    self.diffuse[i] += SIGNAL_FLUID_PRODUCTION * other.coefficients[i] / 6.0;
                 }
             }
         }

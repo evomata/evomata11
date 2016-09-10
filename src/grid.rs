@@ -20,7 +20,7 @@ const EXPLODE_REQUIREMENT: usize = 200;
 const FLUID_CYCLES: usize = 6;
 
 const KILL_FLUID_COLOR_NORMAL: f64 = 0.01;
-const SIGNAL_FLUID_COLOR_NORMAL: f64 = 0.2;
+const SIGNAL_FLUID_COLOR_NORMAL: f64 = 0.1;
 const FOOD_FLUID_COLOR_NORMAL: f64 = 50.0;
 
 const EXPLODE_AMOUNT: f64 = 0.1;
@@ -60,9 +60,7 @@ impl Hex {
                            1.0];
         let signal_colors = [[0.0, 0.5, 0.5], [0.5, 0.5, 0.5], [0.5, 0.0, 0.5], [0.5, 0.5, 0.0]];
         for i in 0..4 {
-            let signalf = (((self.solution.fluids[4 + i] - SIGNAL_FLUID_NORMAL) /
-                            SIGNAL_FLUID_COLOR_NORMAL) as f32)
-                .abs();
+            let signalf = ((self.solution.fluids[4 + i] / SIGNAL_FLUID_COLOR_NORMAL) as f32).abs();
             for j in 0..3 {
                 ocolors[j] += signal_colors[i][j] * signalf;
             }
@@ -478,10 +476,10 @@ fn randomizing_vec(width: usize, height: usize, rng: &mut Isaac64Rng) -> Vec<Hex
                                          1.0,
                                          noise.apply(&seeds[0], &[x as f64, y as f64]),
                                          KILL_FLUID_NORMAL,
-                                         SIGNAL_FLUID_NORMAL,
-                                         SIGNAL_FLUID_NORMAL,
-                                         SIGNAL_FLUID_NORMAL,
-                                         SIGNAL_FLUID_NORMAL],
+                                         0.0,
+                                         0.0,
+                                         0.0,
+                                         0.0],
                                         NORMAL_DIFFUSION),
                 cell: None,
                 decision: None,
