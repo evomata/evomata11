@@ -173,9 +173,21 @@ fn main() {
                 }
                 Event::KeyboardInput(ElementState::Pressed, _, Some(VKC::S)) => {
                     g.spawning = !g.spawning;
+                    println!("Spawning {}",
+                             if g.spawning {
+                                 "enabled"
+                             } else {
+                                 "disabled"
+                             });
                 }
                 Event::KeyboardInput(ElementState::Pressed, _, Some(VKC::T)) => {
                     rendering_enabled = !rendering_enabled;
+                    println!("Rendering {}",
+                             if rendering_enabled {
+                                 "enabled"
+                             } else {
+                                 "disabled"
+                             });
                 }
                 Event::MouseWheel(MouseScrollDelta::LineDelta(_, lines), _) => {
                     screen_hex_ratio -= lines * SCROLL_LINES_RATIO;
