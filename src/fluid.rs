@@ -6,8 +6,8 @@ pub const ACCURACY: f64 = 5.0;
 pub const TOTAL_FLUIDS: usize = 8;
 pub const NORMAL_DIFFUSION: [f64; TOTAL_FLUIDS] = [0.0004 * ACCURACY,
                                                    1.0,
-                                                   0.2 * ACCURACY,
                                                    0.5,
+                                                   0.2 * ACCURACY,
                                                    0.5 * ACCURACY,
                                                    0.5 * ACCURACY,
                                                    0.5 * ACCURACY,
@@ -17,10 +17,15 @@ pub const KILL_FLUID_DECAY: f64 = 0.01 * ACCURACY;
 pub const KILL_FLUID_UPPER_THRESHOLD: f64 = 0.052;
 pub const KILL_FLUID_LOWER_THRESHOLD: f64 = 0.048;
 pub const SIGNAL_FLUID_NORMAL: f64 = 0.5;
-pub const SIGNAL_FLUID_DECAY: f64 = 0.001 * ACCURACY;
+pub const SIGNAL_FLUID_DECAY: f64 = 0.00001 * ACCURACY;
 pub const B_FOOD_RATE: f64 = 0.003 * ACCURACY;
 
 const TIMESTEP: f64 = 0.2 / ACCURACY;
+
+pub enum DiffusionType {
+    FlatSignals,
+    DynSignals,
+}
 
 #[derive(Default, Debug)]
 pub struct Solution {
@@ -40,31 +45,52 @@ impl Solution {
 
     pub fn react_deltas(&self) -> [f64; TOTAL_FLUIDS] {
         let a = self.fluids[1];
-        let b = self.fluids[3];
-        let kill = self.fluids[2];
+        let b = self.fluids[2];
+        let kill = self.fluids[3];
         let f = 0.029;
         let k = 0.057;
         [B_FOOD_RATE * b,
          -a * b * b + f * (1.0 - a),
-         KILL_FLUID_DECAY * (KILL_FLUID_NORMAL - kill),
          a * b * b - (k + f) * b,
+         KILL_FLUID_DECAY * (KILL_FLUID_NORMAL - kill),
          SIGNAL_FLUID_DECAY * (SIGNAL_FLUID_NORMAL - self.fluids[4]),
          SIGNAL_FLUID_DECAY * (SIGNAL_FLUID_NORMAL - self.fluids[5]),
          SIGNAL_FLUID_DECAY * (SIGNAL_FLUID_NORMAL - self.fluids[6]),
          SIGNAL_FLUID_DECAY * (SIGNAL_FLUID_NORMAL - self.fluids[7])]
     }
 
-    pub fn diffuse_from(&mut self, other: &Solution) {
-        for i in 0..TOTAL_FLUIDS {
+    pub fn diffuse_from(&mut self, other: &Solution, dtype: DiffusionType) {
+        // Handle normal fluids.
+        for i in 0..4 {
             self.diffuse[i] += other.fluids[i] * other.coefficients[i] / 6.0;
+        }
+        // Handle signal fluids.
+        match dtype {
+            DiffusionType::DynSignals => {
+                for i in 4..TOTAL_FLUIDS {
+                    self.diffuse[i] += other.fluids[i] * other.coefficients[i] / 6.0;
+                }
+            }
+            DiffusionType::FlatSignals => {
+                for i in 4..TOTAL_FLUIDS {
+                    self.diffuse[i] += SIGNAL_FLUID_NORMAL * other.coefficients[i] / 6.0;
+                }
+            }
         }
     }
 
     pub fn end_cycle(&mut self) {
         let reacts = self.react_deltas();
-        for i in 0..TOTAL_FLUIDS {
+        // Handle normal fluids.
+        for i in 0..4 {
             self.fluids[i] += TIMESTEP *
                               (reacts[i] + self.diffuse[i] - self.coefficients[i] * self.fluids[i]);
+            self.diffuse[i] = 0.0;
+        }
+        // Handle signal fluids.
+        for i in 4..TOTAL_FLUIDS {
+            self.fluids[i] += TIMESTEP *
+                              (reacts[i] + self.diffuse[i] - NORMAL_DIFFUSION[i] * self.fluids[i]);
             self.diffuse[i] = 0.0;
         }
     }

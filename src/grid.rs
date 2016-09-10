@@ -52,11 +52,11 @@ unsafe impl Send for GridCont {}
 
 impl Hex {
     pub fn color(&self) -> [f32; 4] {
-        let killf = ((self.solution.fluids[2] - KILL_FLUID_NORMAL) /
+        let killf = ((self.solution.fluids[3] - KILL_FLUID_NORMAL) /
                      KILL_FLUID_COLOR_NORMAL) as f32;
         let mut ocolors = [killf.abs(),
                            (self.solution.fluids[0] / FOOD_FLUID_COLOR_NORMAL) as f32,
-                           0.25 * self.solution.fluids[3] as f32,
+                           0.25 * self.solution.fluids[2] as f32,
                            1.0];
         let signal_colors = [[0.0, 0.5, 0.5], [0.5, 0.5, 0.5], [0.5, 0.0, 0.5], [0.5, 0.5, 0.0]];
         for i in 0..4 {
@@ -385,7 +385,13 @@ impl Grid {
                             let (this, neighbors) = g.hex_and_neighbors(x, y);
 
                             for n in &neighbors {
-                                this.solution.diffuse_from(&n.solution);
+                                this.solution.diffuse_from(&n.solution,
+                                                           match n.cell {
+                                                               Some(_) => {
+                                                                   DiffusionType::FlatSignals
+                                                               }
+                                                               None => DiffusionType::DynSignals,
+                                                           });
                             }
                         }
                     }
@@ -422,8 +428,8 @@ impl Grid {
                             let hex = g.hex_mut(x, y);
                             if hex.cell.is_some() {
                                 if hex.cell.as_ref().unwrap().suicide ||
-                                   hex.solution.fluids[2] > KILL_FLUID_UPPER_THRESHOLD ||
-                                   hex.solution.fluids[2] < KILL_FLUID_LOWER_THRESHOLD ||
+                                   hex.solution.fluids[3] > KILL_FLUID_UPPER_THRESHOLD ||
+                                   hex.solution.fluids[3] < KILL_FLUID_LOWER_THRESHOLD ||
                                    hex.cell.as_ref().unwrap().inhale == 0 {
                                     hex.solution.fluids[0] +=
                                         DEATH_RELEASE_COEFFICIENT * CONSUMPTION *
@@ -470,8 +476,8 @@ fn randomizing_vec(width: usize, height: usize, rng: &mut Isaac64Rng) -> Vec<Hex
             Hex {
                 solution: Solution::new([0.0,
                                          1.0,
-                                         KILL_FLUID_NORMAL,
                                          noise.apply(&seeds[0], &[x as f64, y as f64]),
+                                         KILL_FLUID_NORMAL,
                                          SIGNAL_FLUID_NORMAL,
                                          SIGNAL_FLUID_NORMAL,
                                          SIGNAL_FLUID_NORMAL,
