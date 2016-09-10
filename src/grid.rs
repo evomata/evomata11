@@ -20,7 +20,8 @@ const EXPLODE_REQUIREMENT: usize = 200;
 const FLUID_CYCLES: usize = 6;
 
 const KILL_FLUID_COLOR_NORMAL: f64 = 0.01;
-const SIGNAL_FLUID_COLOR_NORMAL: f64 = 2.5;
+const SIGNAL_FLUID_SQRT_NORMAL: f64 = 0.5;
+const SIGNAL_FLUID_COLOR_NORMAL: f32 = 10.0;
 const FOOD_FLUID_COLOR_NORMAL: f64 = 50.0;
 
 const EXPLODE_AMOUNT: f64 = 0.1;
@@ -60,8 +61,9 @@ impl Hex {
                            1.0];
         let signal_colors = [[0.0, 0.5, 0.5], [0.5, 0.5, 0.5], [0.5, 0.0, 0.5], [0.5, 0.5, 0.0]];
         for i in 0..4 {
-            let signalf =
-                ((self.solution.fluids[4 + i] / SIGNAL_FLUID_COLOR_NORMAL) as f32).abs().sqrt();
+            let signalf = ((self.solution.fluids[4 + i] / SIGNAL_FLUID_SQRT_NORMAL) as f32)
+                .abs()
+                .sqrt() / SIGNAL_FLUID_COLOR_NORMAL;
             for j in 0..3 {
                 ocolors[j] += signal_colors[i][j] * signalf;
             }
