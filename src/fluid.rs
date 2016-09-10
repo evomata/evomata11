@@ -2,7 +2,7 @@ extern crate num;
 extern crate nalgebra as na;
 
 // As this goes up, so does simulation accuracy, but the reaction-diffusion stuff slows down.
-pub const ACCURACY: f64 = 5.0;
+pub const ACCURACY: f64 = 10.0;
 pub const TOTAL_FLUIDS: usize = 8;
 pub const NORMAL_DIFFUSION: [f64; TOTAL_FLUIDS] = [0.0004 * ACCURACY,
                                                    1.0,
