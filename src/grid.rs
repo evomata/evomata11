@@ -14,7 +14,7 @@ const CONSUMPTION: f64 = 0.04;
 const SURVIVAL_THRESHOLD: f64 = 0.0;
 const DEATH_RELEASE_COEFFICIENT: f64 = 1.0;
 const INHALE_CAP: usize = 1000;
-const MOVEMENT_COST: usize = 120;
+const MOVEMENT_COST: usize = 200;
 const EXPLODE_REQUIREMENT: usize = 200;
 
 const FLUID_CYCLES: usize = 6;
