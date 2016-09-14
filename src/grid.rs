@@ -9,7 +9,7 @@ use num_cpus;
 use crossbeam;
 
 const SPAWN_DENSITY: f64 = 0.000001;
-const SPAWN_RATE: f64 = SPAWN_DENSITY * GRID_WIDTH as f64 * GRID_HEIGHT as f64;
+const DEFAULT_SPAWN_RATE: f64 = SPAWN_DENSITY * GRID_WIDTH as f64 * GRID_HEIGHT as f64;
 const CONSUMPTION: f64 = 0.04;
 const SURVIVAL_THRESHOLD: f64 = 0.0;
 const DEATH_RELEASE_COEFFICIENT: f64 = 1.0;
@@ -74,6 +74,7 @@ impl Hex {
 
 pub struct Grid {
     pub spawning: bool,
+    pub spawn_rate: f64,
     pub width: usize,
     pub height: usize,
     tiles: Vec<Hex>,
@@ -83,6 +84,7 @@ impl Grid {
     pub fn new(width: usize, height: usize, rng: &mut Isaac64Rng) -> Self {
         Grid {
             spawning: true,
+            spawn_rate: DEFAULT_SPAWN_RATE,
             width: width,
             height: height,
             tiles: randomizing_vec(width, height, rng),
@@ -149,7 +151,7 @@ impl Grid {
     }
 
     fn cycle_spawn(&mut self, rng: &mut Isaac64Rng) {
-        if rng.next_f64() < SPAWN_RATE {
+        if rng.next_f64() < self.spawn_rate {
             let tile = rng.gen_range(0, self.width * self.height);
             if self.tiles[tile].cell.is_none() {
                 self.tiles[tile].cell = Some(Cell::new(rng));
