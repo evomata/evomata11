@@ -178,6 +178,16 @@ fn main() {
                     g.spawn_rate /= GRID_SPAWN_MULTIPLY;
                     println!("New spawn rate: {}", g.spawn_rate);
                 }
+                Event::KeyboardInput(ElementState::Pressed, _, Some(VKC::P)) => {
+                    g.movement_cost += 1;
+                    println!("New movement cost: {}", g.movement_cost);
+                }
+                Event::KeyboardInput(ElementState::Pressed, _, Some(VKC::O)) => {
+                    if g.movement_cost > 0 {
+                        g.movement_cost -= 1;
+                    }
+                    println!("New movement cost: {}", g.movement_cost);
+                }
                 Event::KeyboardInput(ElementState::Pressed, _, Some(VKC::R)) => {
                     g.randomize(&mut rng);
                 }

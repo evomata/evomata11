@@ -14,8 +14,8 @@ const CONSUMPTION: f64 = 0.04;
 const SURVIVAL_THRESHOLD: f64 = 0.0;
 const DEATH_RELEASE_COEFFICIENT: f64 = 1.0;
 const INHALE_CAP: usize = 1000;
-const MOVEMENT_COST: usize = 150;
-const EXPLODE_REQUIREMENT: usize = 200;
+const DEFAULT_MOVEMENT_COST: usize = 150;
+const EXPLODE_REQUIREMENT: usize = 80;
 
 const FLUID_CYCLES: usize = 6;
 
@@ -75,6 +75,7 @@ impl Hex {
 pub struct Grid {
     pub spawning: bool,
     pub spawn_rate: f64,
+    pub movement_cost: usize,
     pub width: usize,
     pub height: usize,
     tiles: Vec<Hex>,
@@ -85,6 +86,7 @@ impl Grid {
         Grid {
             spawning: true,
             spawn_rate: DEFAULT_SPAWN_RATE,
+            movement_cost: DEFAULT_MOVEMENT_COST,
             width: width,
             height: height,
             tiles: randomizing_vec(width, height, rng),
@@ -307,8 +309,8 @@ impl Grid {
                     self.hex_mut(x, y).cell = self.hex_mut(from_coord.0, from_coord.1).cell.take();
                     // Apply movement cost.
                     let inhale = self.hex(x, y).cell.as_ref().unwrap().inhale;
-                    if inhale >= MOVEMENT_COST {
-                        self.hex_mut(x, y).cell.as_mut().unwrap().inhale -= MOVEMENT_COST;
+                    if inhale >= self.movement_cost {
+                        self.hex_mut(x, y).cell.as_mut().unwrap().inhale -= self.movement_cost;
                     } else {
                         self.hex_mut(x, y).cell.as_mut().unwrap().inhale = 0;
                     }
@@ -319,12 +321,12 @@ impl Grid {
                         // Apply movement cost to source.
                         let inhale =
                             self.hex(mate.source.0, mate.source.1).cell.as_ref().unwrap().inhale;
-                        if inhale >= MOVEMENT_COST {
+                        if inhale >= self.movement_cost {
                             self.hex_mut(mate.source.0, mate.source.1)
                                 .cell
                                 .as_mut()
                                 .unwrap()
-                                .inhale -= MOVEMENT_COST;
+                                .inhale -= self.movement_cost;
                         } else {
                             self.hex_mut(mate.source.0, mate.source.1)
                                 .cell
@@ -345,12 +347,12 @@ impl Grid {
                                 .as_ref()
                                 .unwrap()
                                 .inhale;
-                            if inhale >= MOVEMENT_COST {
+                            if inhale >= self.movement_cost {
                                 self.hex_mut(mate.source.0, mate.source.1)
                                     .cell
                                     .as_mut()
                                     .unwrap()
-                                    .inhale -= MOVEMENT_COST;
+                                    .inhale -= self.movement_cost;
                             } else {
                                 self.hex_mut(mate.source.0, mate.source.1)
                                     .cell
