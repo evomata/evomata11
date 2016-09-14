@@ -151,10 +151,19 @@ impl Grid {
     }
 
     fn cycle_spawn(&mut self, rng: &mut Isaac64Rng) {
-        if rng.next_f64() < self.spawn_rate {
-            let tile = rng.gen_range(0, self.width * self.height);
-            if self.tiles[tile].cell.is_none() {
-                self.tiles[tile].cell = Some(Cell::new(rng));
+        if self.spawn_rate >= 1.0 {
+            for _ in 0..self.spawn_rate as usize {
+                let tile = rng.gen_range(0, self.width * self.height);
+                if self.tiles[tile].cell.is_none() {
+                    self.tiles[tile].cell = Some(Cell::new(rng));
+                }
+            }
+        } else {
+            if rng.next_f64() < self.spawn_rate {
+                let tile = rng.gen_range(0, self.width * self.height);
+                if self.tiles[tile].cell.is_none() {
+                    self.tiles[tile].cell = Some(Cell::new(rng));
+                }
             }
         }
     }
