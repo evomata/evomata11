@@ -85,7 +85,7 @@ pub enum Choice {
 #[derive(Clone, Debug)]
 pub struct Decision {
     pub choice: Choice,
-    pub coefficients: [f64; TOTAL_FLUIDS],
+    pub coefficients: [[f64; TOTAL_FLUIDS]; 6],
 }
 
 #[derive(Clone, Debug)]
@@ -195,43 +195,39 @@ impl Cell {
                       self.brain.memory[3]];
 
         let mut compute = self.brain.mep.compute(&inputs[..]);
-        let coefficients = [compute.next().unwrap(),
-                            compute.next().unwrap(),
-                            compute.next().unwrap(),
-                            compute.next().unwrap(),
-                            compute.next().unwrap(),
-                            compute.next().unwrap(),
-                            compute.next().unwrap(),
-                            compute.next().unwrap()];
+
+        let mut coefficients = [[0.0; TOTAL_FLUIDS]; 6];
+        for da in &mut coefficients {
+            for f in da {
+                *f = compute.next().unwrap();
+            }
+        }
+
         let move_attempt = compute.next().unwrap();
-        let move_directions = [compute.next().unwrap(),
-                               compute.next().unwrap(),
-                               compute.next().unwrap(),
-                               compute.next().unwrap(),
-                               compute.next().unwrap(),
-                               compute.next().unwrap()];
+
+        let mut move_directions = [0f64; 6];
+        for f in &mut move_directions {
+            *f = compute.next().unwrap();
+        }
+
         let mate_attempt = compute.next().unwrap();
-        let mate_directions = [compute.next().unwrap(),
-                               compute.next().unwrap(),
-                               compute.next().unwrap(),
-                               compute.next().unwrap(),
-                               compute.next().unwrap(),
-                               compute.next().unwrap()];
-        let spawn_directions = [compute.next().unwrap(),
-                                compute.next().unwrap(),
-                                compute.next().unwrap(),
-                                compute.next().unwrap(),
-                                compute.next().unwrap(),
-                                compute.next().unwrap()];
+
+        let mut mate_directions = [0f64; 6];
+        for f in &mut mate_directions {
+            *f = compute.next().unwrap();
+        }
+
+        let mut spawn_directions = [0f64; 6];
+        for f in &mut spawn_directions {
+            *f = compute.next().unwrap();
+        }
 
         let divide_attempt = compute.next().unwrap();
 
-        let turn_directions = [compute.next().unwrap(),
-                               compute.next().unwrap(),
-                               compute.next().unwrap(),
-                               compute.next().unwrap(),
-                               compute.next().unwrap(),
-                               compute.next().unwrap()];
+        let mut turn_directions = [0f64; 6];
+        for f in &mut turn_directions {
+            *f = compute.next().unwrap();
+        }
 
         let explode_attempt = compute.next().unwrap();
 
@@ -389,29 +385,34 @@ impl Cell {
                 _ => Choice::Nothing,
             },
             coefficients: {
-                let mut ncoef = [0.0; TOTAL_FLUIDS];
+                let mut ncoef = [[0.0; TOTAL_FLUIDS]; 6];
                 // Handle normal fluids.
-                for i in 0..4 {
-                    let f = coefficients[i];
-                    ncoef[i] = if f.is_normal() {
-                        let nf = sig(f);
-                        if nf > 0.0 {
-                            NORMAL_DIFFUSION[i] * (nf * 0.5 + 1.0)
+                for (i, fa) in ncoef.iter_mut().enumerate() {
+                    for (j, f) in fa.iter_mut().enumerate() {
+                        *f =
+                        // Handle normal fluids.
+                        if j < 4 {
+                            let f = coefficients[i][j];
+                            if f.is_normal() {
+                                let nf = sig(f);
+                                if nf > 0.0 {
+                                    NORMAL_DIFFUSION[j] * (nf * 0.5 + 1.0)
+                                } else {
+                                    NORMAL_DIFFUSION[j] * (nf * 1.0 / 3.0 + 1.0)
+                                }
+                            } else {
+                                NORMAL_DIFFUSION[j]
+                            }
+                        // Handle signal fluids.
                         } else {
-                            NORMAL_DIFFUSION[i] * (nf * 1.0 / 3.0 + 1.0)
-                        }
-                    } else {
-                        NORMAL_DIFFUSION[i]
-                    };
-                }
-                // Handle signal fluids.
-                for i in 4..TOTAL_FLUIDS {
-                    let f = coefficients[i];
-                    ncoef[i] = if f.is_normal() {
-                        sig(f)
-                    } else {
-                        0.0
-                    };
+                            let f = coefficients[i][j];
+                            if f.is_normal() {
+                                sig(f)
+                            } else {
+                                0.0
+                            }
+                        };
+                    }
                 }
                 ncoef
             },

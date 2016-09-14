@@ -31,12 +31,12 @@ pub enum DiffusionType {
 #[derive(Default, Debug)]
 pub struct Solution {
     pub fluids: [f64; TOTAL_FLUIDS],
-    pub coefficients: [f64; TOTAL_FLUIDS],
+    pub coefficients: [[f64; TOTAL_FLUIDS]; 6],
     pub diffuse: [f64; TOTAL_FLUIDS],
 }
 
 impl Solution {
-    pub fn new(fluids: [f64; TOTAL_FLUIDS], coefficients: [f64; TOTAL_FLUIDS]) -> Self {
+    pub fn new(fluids: [f64; TOTAL_FLUIDS], coefficients: [[f64; TOTAL_FLUIDS]; 6]) -> Self {
         Solution {
             fluids: fluids,
             coefficients: coefficients,
@@ -60,32 +60,42 @@ impl Solution {
          -SIGNAL_FLUID_DECAY * self.fluids[7]]
     }
 
-    pub fn diffuse_from(&mut self, other: &Solution, dtype: DiffusionType) {
+    pub fn diffuse_from(&mut self, other: &Solution, dtype: DiffusionType, direction: usize) {
         // Handle normal fluids.
         for i in 0..4 {
-            self.diffuse[i] += other.fluids[i] * other.coefficients[i] / 6.0;
+            self.diffuse[i] += other.fluids[i] * other.coefficients[direction][i] / 6.0;
         }
         // Handle signal fluids.
         match dtype {
             DiffusionType::DynSignals => {
                 for i in 4..TOTAL_FLUIDS {
-                    self.diffuse[i] += other.fluids[i] * other.coefficients[i] / 6.0;
+                    self.diffuse[i] += other.fluids[i] * other.coefficients[direction][i] / 6.0;
                 }
             }
             DiffusionType::FlatSignals => {
                 for i in 4..TOTAL_FLUIDS {
-                    self.diffuse[i] += SIGNAL_FLUID_PRODUCTION * other.coefficients[i] / 6.0;
+                    self.diffuse[i] += SIGNAL_FLUID_PRODUCTION * other.coefficients[direction][i] /
+                                       6.0;
                 }
             }
         }
+    }
+
+    #[inline]
+    fn coefficient_sum(&self, fluid: usize) -> f64 {
+        let mut acc = 0.0;
+        for a in &self.coefficients {
+            acc += a[fluid];
+        }
+        acc / 6.0
     }
 
     pub fn end_cycle(&mut self) {
         let reacts = self.react_deltas();
         // Handle normal fluids.
         for i in 0..4 {
-            self.fluids[i] += TIMESTEP *
-                              (reacts[i] + self.diffuse[i] - self.coefficients[i] * self.fluids[i]);
+            self.fluids[i] +=
+                TIMESTEP * (reacts[i] + self.diffuse[i] - self.coefficient_sum(i) * self.fluids[i]);
             self.diffuse[i] = 0.0;
         }
         // Handle signal fluids.

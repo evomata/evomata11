@@ -214,7 +214,7 @@ impl Grid {
                                 decision.coefficients
                             } else {
                                 // Set the diffusion coefficients to the normal values.
-                                NORMAL_DIFFUSION
+                                [NORMAL_DIFFUSION; 6]
                             };
 
                             // Only add movements here if no cell is present.
@@ -385,14 +385,15 @@ impl Grid {
                         for y in (g.height * i / numcpus)..(g.height * (i + 1) / numcpus) {
                             let (this, neighbors) = g.hex_and_neighbors(x, y);
 
-                            for n in &neighbors {
+                            for (i, n) in neighbors.iter().enumerate() {
                                 this.solution.diffuse_from(&n.solution,
                                                            match n.cell {
                                                                Some(_) => {
                                                                    DiffusionType::FlatSignals
                                                                }
                                                                None => DiffusionType::DynSignals,
-                                                           });
+                                                           },
+                                                           (i + 3) % 6);
                             }
                         }
                     }
@@ -483,7 +484,7 @@ fn randomizing_vec(width: usize, height: usize, rng: &mut Isaac64Rng) -> Vec<Hex
                                          0.0,
                                          0.0,
                                          0.0],
-                                        NORMAL_DIFFUSION),
+                                        [NORMAL_DIFFUSION; 6]),
                 cell: None,
                 decision: None,
                 delta: Delta {
