@@ -2,6 +2,9 @@
 The 11th cellular automata created with the sole purpose of creating emergent phenomena through evolution.
 Uses a gray-scott reaction diffusion equation along with genetic algorithms.
 
+### Movement cost around 150, moderate population (due to food) density.
+![Image](http://i.imgur.com/FCy58lC.png)
+
 ### Simulation adjusted for longer-term.
 ![Image](https://i.imgur.com/pf9V6ih.png)
 
