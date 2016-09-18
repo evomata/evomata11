@@ -23,12 +23,13 @@ pub const B_FOOD_RATE: f64 = 0.005 * ACCURACY;
 
 const TIMESTEP: f64 = 0.2 / ACCURACY;
 
+#[derive(Serialize, Deserialize)]
 pub enum DiffusionType {
     FlatSignals,
     DynSignals,
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Serialize, Deserialize)]
 pub struct Solution {
     pub fluids: [f64; TOTAL_FLUIDS],
     pub coefficients: [[f64; TOTAL_FLUIDS]; 6],

@@ -8,7 +8,7 @@ use super::fluid::{NORMAL_DIFFUSION, TOTAL_FLUIDS};
 const INITIAL_INHALE: usize = 20;
 
 enum_from_primitive! {
-    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
     pub enum Direction {
         UpRight,
         UpLeft,
@@ -69,7 +69,7 @@ impl Direction {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Choice {
     // If the mate and spawn direction are the same, cause a divide.
     Divide {
@@ -82,13 +82,13 @@ pub enum Choice {
     Nothing,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Decision {
     pub choice: Choice,
     pub coefficients: [[f64; TOTAL_FLUIDS]; 6],
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Cell {
     pub inhale: usize,
     pub suicide: bool,

@@ -26,19 +26,19 @@ const FOOD_FLUID_COLOR_NORMAL: f64 = 150.0;
 
 const EXPLODE_AMOUNT: f64 = 0.1;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct Mate {
     mate: (usize, usize),
     source: (usize, usize),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 struct Delta {
     movement_attempts: Vec<(usize, usize)>,
     mate_attempts: Vec<Mate>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Hex {
     pub solution: Solution,
     pub cell: Option<Cell>,
@@ -72,6 +72,7 @@ impl Hex {
     }
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct Grid {
     pub spawning: bool,
     pub spawn_rate: f64,

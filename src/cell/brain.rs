@@ -1,6 +1,7 @@
 use rand::{Rng, Isaac64Rng};
 use itertools::Itertools;
 use mli;
+use serde::{Serialize, Deserialize, Serializer, Deserializer};
 
 // 0.0, 0.5, -0.5, 1.0, -1.0, 2.0, -2.0, MAX, MIN
 pub const CONST_INPUTS: usize = 9;
@@ -16,7 +17,13 @@ pub const DEFAULT_CROSSOVER_POINTS: usize = 1;
 pub const DEFAULT_INSTRUCTIONS: usize = 512;
 const MUTATE_PROBABILITY: f64 = 1.0;
 
-#[derive(Clone, Debug)]
+type MepType = mli::Mep<Ins,
+                        Isaac64Rng,
+                        f64,
+                        fn(&mut Ins, &mut Isaac64Rng),
+                        fn(&Ins, f64, f64) -> f64>;
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Ins {
     _NOP,
     _ADD,
@@ -88,7 +95,7 @@ fn mutator(ins: &mut Ins, rng: &mut Isaac64Rng) {
     *ins = unsafe { mem::transmute(rng.gen_range::<u8>(0, Ins::MAX as u8)) };
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Decision {
     pub mate: i64,
     pub node: i64,
@@ -114,13 +121,10 @@ impl Default for Decision {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Brain {
-    pub mep: mli::Mep<Ins,
-                      Isaac64Rng,
-                      f64,
-                      fn(&mut Ins, &mut Isaac64Rng),
-                      fn(&Ins, f64, f64) -> f64>,
+    #[serde(serialize_with = "mep_serializer", deserialize_with = "mep_deserializer")]
+    pub mep: MepType,
     pub memory: [f64; TOTAL_MEMORY],
 }
 
@@ -173,4 +177,18 @@ impl Brain {
         b.mutate(rng);
         b
     }
+}
+
+fn mep_serializer<S>(mep: &MepType, serializer: &mut S) -> Result<(), S::Error>
+    where S: Serializer
+{
+    let smep = mli::SerialMep::from(mep);
+    smep.serialize(serializer)
+}
+
+fn mep_deserializer<D>(deserializer: &mut D) -> Result<MepType, D::Error>
+    where D: Deserializer
+{
+    let smep = try!(mli::SerialMep::deserialize(deserializer));
+    Ok(MepType::new_from_serial_mep(smep, mutator, processor))
 }

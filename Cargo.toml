@@ -16,5 +16,11 @@ enum_derive = "0.1.7"
 enum_primitive = "0.1.0"
 noise = "0.2.0"
 num_cpus = "1.0.0"
+serde = "0.8"
+serde_macros = "0.8"
+bincode = "0.6"
 
-mli = {git = "https://github.com/vadixidav/mli", rev = "97cb5aaa766e99d2dce79c5498d7e60e485cea97"}
+mli = {git = "https://github.com/vadixidav/mli"}
+
+[replace]
+"aster:0.26.1" = { git = "https://github.com/jchlapinski/aster" }

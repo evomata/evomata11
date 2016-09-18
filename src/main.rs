@@ -1,3 +1,8 @@
+#![feature(custom_derive, plugin)]
+#![plugin(serde_macros)]
+
+extern crate serde;
+extern crate bincode;
 extern crate rand;
 #[macro_use]
 extern crate custom_derive;
@@ -168,8 +173,37 @@ fn main() {
         for ev in display.poll_events() {
             use glium::glutin::{Event, ElementState, MouseButton, MouseScrollDelta,
                                 VirtualKeyCode as VKC};
+            use std::fs::File;
             match ev {
                 Event::Closed => return,
+                Event::KeyboardInput(ElementState::Pressed, _, Some(VKC::L)) => {
+                    match File::open("gridstate") {
+                        Ok(mut f) => {
+                            match bincode::serde::deserialize_from(&mut f,
+                                                                   bincode::SizeLimit::Infinite) {
+                                Ok(t) => {
+                                    g = t;
+                                    println!("Successfully loaded grid from \"gridstate\".");
+                                }
+                                Err(e) => println!("Failed to load grid state: {}", e),
+                            }
+                        }
+                        Err(e) => println!("Unable to create file \"gridstate\": {}", e),
+                    }
+                }
+                Event::KeyboardInput(ElementState::Pressed, _, Some(VKC::W)) => {
+                    match File::create("gridstate") {
+                        Ok(mut f) => {
+                            match bincode::serde::serialize_into(&mut f,
+                                                                 &g,
+                                                                 bincode::SizeLimit::Infinite) {
+                                Ok(()) => println!("Successfully saved grid to \"gridstate\"."),
+                                Err(e) => println!("Failed to save grid state: {}", e),
+                            }
+                        }
+                        Err(e) => println!("Unable to open file \"gridstate\": {}", e),
+                    }
+                }
                 Event::KeyboardInput(ElementState::Pressed, _, Some(VKC::U)) => {
                     g.spawn_rate *= GRID_SPAWN_MULTIPLY;
                     println!("New spawn rate: {}", g.spawn_rate);
