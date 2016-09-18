@@ -49,9 +49,24 @@ const GRID_SPAWN_MULTIPLY: f64 = 1.25;
 const SECONDS_BETWEEN_AUTOSAVES: u64 = 60 * 30;
 
 fn main() {
-    let mut rng = Isaac64Rng::from_seed(&[2, 5, 3, 12454]);
-    let mut g = grid::Grid::new(GRID_WIDTH, GRID_HEIGHT, &mut rng);
     use glium::DisplayBuild;
+    let mut rng = Isaac64Rng::from_seed(&[2, 5, 3, 12454]);
+    let mut g = match File::open("gridstate") {
+        Ok(mut f) => {
+            match bincode::serde::deserialize_from(&mut f, bincode::SizeLimit::Infinite) {
+                Ok(t) => {
+                    println!("Found grid file \"gridstate\" and loaded grid.");
+                    t
+                }
+                Err(e) => {
+                    println!("Found grid file \"gridstate\" but failed to load grid: {}",
+                             e);
+                    grid::Grid::new(GRID_WIDTH, GRID_HEIGHT, &mut rng)
+                }
+            }
+        }
+        Err(_) => grid::Grid::new(GRID_WIDTH, GRID_HEIGHT, &mut rng),
+    };
     let display = glium::glutin::WindowBuilder::new().with_vsync().build_glium().unwrap();
     // window.set_cursor_state(glium::glutin::CursorState::Hide).ok().unwrap();
     let glowy = Renderer::new(&display);
