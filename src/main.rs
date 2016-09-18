@@ -29,6 +29,8 @@ use nalgebra as na;
 use nalgebra::ToHomogeneous;
 use num::One;
 
+use std::time;
+use std::fs::File;
 use std::sync::mpsc::channel;
 
 use rand::{Isaac64Rng, SeedableRng};
@@ -43,6 +45,8 @@ const SCROLL_LINES_RATIO: f32 = 0.707;
 const SCROLL_PIXELS_RATIO: f32 = 0.707;
 
 const GRID_SPAWN_MULTIPLY: f64 = 1.25;
+
+const SECONDS_BETWEEN_AUTOSAVES: u64 = 60 * 30;
 
 fn main() {
     let mut rng = Isaac64Rng::from_seed(&[2, 5, 3, 12454]);
@@ -59,6 +63,8 @@ fn main() {
     let mut mouse_pressed = false;
 
     let mut rendering_enabled = true;
+
+    let mut last_autosave = time::Instant::now();
 
     loop {
         use glium::Surface;
@@ -170,13 +176,28 @@ fn main() {
             target.unwrap().finish().unwrap();
         }
 
+        let now = time::Instant::now();
+        if now - last_autosave > time::Duration::from_secs(SECONDS_BETWEEN_AUTOSAVES) {
+            last_autosave = now;
+
+            match File::create("gridstate") {
+                Ok(mut f) => {
+                    match bincode::serde::serialize_into(&mut f, &g, bincode::SizeLimit::Infinite) {
+                        Ok(()) => println!("Successfully saved grid to \"gridstate\"."),
+                        Err(e) => println!("Failed to save grid state: {}", e),
+                    }
+                }
+                Err(e) => println!("Unable to open file \"gridstate\": {}", e),
+            }
+        }
+
         for ev in display.poll_events() {
             use glium::glutin::{Event, ElementState, MouseButton, MouseScrollDelta,
                                 VirtualKeyCode as VKC};
-            use std::fs::File;
             match ev {
                 Event::Closed => return,
                 Event::KeyboardInput(ElementState::Pressed, _, Some(VKC::L)) => {
+                    last_autosave = now;
                     match File::open("gridstate") {
                         Ok(mut f) => {
                             match bincode::serde::deserialize_from(&mut f,
@@ -192,6 +213,7 @@ fn main() {
                     }
                 }
                 Event::KeyboardInput(ElementState::Pressed, _, Some(VKC::W)) => {
+                    last_autosave = now;
                     match File::create("gridstate") {
                         Ok(mut f) => {
                             match bincode::serde::serialize_into(&mut f,
