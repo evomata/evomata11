@@ -48,6 +48,8 @@ const GRID_SPAWN_MULTIPLY: f64 = 1.25;
 
 const SECONDS_BETWEEN_AUTOSAVES: u64 = 60 * 30;
 
+const MANUAL_FEED_AMOUNT: f64 = 5.0;
+
 fn main() {
     use glium::DisplayBuild;
     let mut rng = Isaac64Rng::from_seed(&[2, 5, 3, 12454]);
@@ -239,6 +241,26 @@ fn main() {
                             }
                         }
                         Err(e) => println!("Unable to open file \"gridstate\": {}", e),
+                    }
+                }
+                Event::KeyboardInput(ElementState::Pressed, _, Some(VKC::F)) => {
+                    let relative_coord = (last_mouse_pos.0 as f32 - center_mouse_coord.0,
+                                          last_mouse_pos.1 as f32 - center_mouse_coord.1);
+
+                    let hex = (center.0 + relative_coord.0 * hex_per_width_pixel,
+                               center.1 - relative_coord.1 * hex_per_height_pixel);
+                    // Adjust the width based on the height.
+                    let hex = (if hex.1 as isize % 2 == 0 {
+                        hex.0 - 0.25
+                    } else {
+                        hex.0 + 0.25
+                    },
+                               hex.1);
+                    if hex.0 > 0.0 && hex.0 < GRID_WIDTH as f32 && hex.1 > 0.0 &&
+                       hex.1 < GRID_HEIGHT as f32 {
+                        let hex = g.hex_mut(hex.0 as usize, hex.1 as usize);
+                        hex.solution.fluids[0] += MANUAL_FEED_AMOUNT;
+                        println!("New food: {}", hex.solution.fluids[0]);
                     }
                 }
                 Event::KeyboardInput(ElementState::Pressed, _, Some(VKC::U)) => {

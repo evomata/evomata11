@@ -13,16 +13,18 @@ const DEFAULT_SPAWN_RATE: f64 = SPAWN_DENSITY * GRID_WIDTH as f64 * GRID_HEIGHT 
 const CONSUMPTION: f64 = 0.04;
 const SURVIVAL_THRESHOLD: f64 = 0.0;
 const DEATH_RELEASE_COEFFICIENT: f64 = 1.0;
-const INHALE_CAP: usize = 1000;
+const INHALE_CAP: usize = 10000;
+const INHALE_MINIMUM: usize = 500;
 const DEFAULT_MOVEMENT_COST: usize = 150;
-const EXPLODE_REQUIREMENT: usize = 80;
+const DIVIDE_COST: usize = 5;
+const EXPLODE_REQUIREMENT: usize = 2100;
 
 const FLUID_CYCLES: usize = 6;
 
 const KILL_FLUID_COLOR_NORMAL: f64 = 0.01;
 const SIGNAL_FLUID_SQRT_NORMAL: f64 = 5.0;
 const SIGNAL_FLUID_COLOR_NORMAL: f32 = 1.0;
-const FOOD_FLUID_COLOR_NORMAL: f64 = 1200.0;
+const FOOD_FLUID_COLOR_NORMAL: f64 = 600.0;
 
 const EXPLODE_AMOUNT: f64 = 0.1;
 
@@ -319,15 +321,15 @@ impl Grid {
                 } else if self.hex(x, y).delta.mate_attempts.len() == 1 {
                     let mate = self.hex(x, y).delta.mate_attempts[0].clone();
                     self.hex_mut(x, y).cell = if mate.mate == (x, y) {
-                        // Apply movement cost to source.
+                        // Apply movement and divide cost to source.
                         let inhale =
                             self.hex(mate.source.0, mate.source.1).cell.as_ref().unwrap().inhale;
-                        if inhale >= self.movement_cost {
+                        if inhale >= self.movement_cost + DIVIDE_COST {
                             self.hex_mut(mate.source.0, mate.source.1)
                                 .cell
                                 .as_mut()
                                 .unwrap()
-                                .inhale -= self.movement_cost;
+                                .inhale -= self.movement_cost + DIVIDE_COST;
                         } else {
                             self.hex_mut(mate.source.0, mate.source.1)
                                 .cell
@@ -342,18 +344,18 @@ impl Grid {
                             .divide(rng))
                     } else {
                         if self.hex(mate.mate.0, mate.mate.1).cell.is_some() {
-                            // Apply movement cost to source.
+                            // Apply movement and divide cost to source.
                             let inhale = self.hex(mate.source.0, mate.source.1)
                                 .cell
                                 .as_ref()
                                 .unwrap()
                                 .inhale;
-                            if inhale >= self.movement_cost {
+                            if inhale >= self.movement_cost + DIVIDE_COST {
                                 self.hex_mut(mate.source.0, mate.source.1)
                                     .cell
                                     .as_mut()
                                     .unwrap()
-                                    .inhale -= self.movement_cost;
+                                    .inhale -= self.movement_cost + DIVIDE_COST;
                             } else {
                                 self.hex_mut(mate.source.0, mate.source.1)
                                     .cell
@@ -446,7 +448,7 @@ impl Grid {
                                 if hex.cell.as_ref().unwrap().suicide ||
                                    hex.solution.fluids[3] > KILL_FLUID_UPPER_THRESHOLD ||
                                    hex.solution.fluids[3] < KILL_FLUID_LOWER_THRESHOLD ||
-                                   hex.cell.as_ref().unwrap().inhale == 0 {
+                                   hex.cell.as_ref().unwrap().inhale < INHALE_MINIMUM {
                                     hex.solution.fluids[0] +=
                                         DEATH_RELEASE_COEFFICIENT * CONSUMPTION *
                                         hex.cell.as_ref().unwrap().inhale as f64;
