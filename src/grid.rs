@@ -1,6 +1,5 @@
 use super::cell::*;
 use super::fluid::*;
-use super::{GRID_WIDTH, GRID_HEIGHT};
 use itertools::Itertools;
 use std::mem;
 use rand::{Isaac64Rng, Rng};
@@ -8,25 +7,10 @@ use noise::{Brownian2, perlin2};
 use num_cpus;
 use crossbeam;
 
-const SPAWN_DENSITY: f64 = 0.000001;
-const DEFAULT_SPAWN_RATE: f64 = SPAWN_DENSITY * GRID_WIDTH as f64 * GRID_HEIGHT as f64;
-const CONSUMPTION: f64 = 0.04;
-const SURVIVAL_THRESHOLD: f64 = 0.0;
-const DEATH_RELEASE_COEFFICIENT: f64 = 1.0;
-const INHALE_CAP: usize = 10000;
-const INHALE_MINIMUM: usize = 500;
-const DEFAULT_MOVEMENT_COST: usize = 150;
-const DIVIDE_COST: usize = 5;
-const EXPLODE_REQUIREMENT: usize = 2100;
-
-const FLUID_CYCLES: usize = 6;
-
 const KILL_FLUID_COLOR_NORMAL: f64 = 0.01;
 const SIGNAL_FLUID_SQRT_NORMAL: f64 = 5.0;
 const SIGNAL_FLUID_COLOR_NORMAL: f32 = 1.0;
 const FOOD_FLUID_COLOR_NORMAL: f64 = 600.0;
-
-const EXPLODE_AMOUNT: f64 = 0.1;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct Mate {
@@ -77,21 +61,47 @@ impl Hex {
 #[derive(Serialize, Deserialize)]
 pub struct Grid {
     pub spawning: bool,
-    pub spawn_rate: f64,
-    pub movement_cost: usize,
     pub width: usize,
     pub height: usize,
+    pub consumption: f64,
+    pub spawn_rate: f64,
+    pub inhale_minimum: usize,
+    pub inhale_cap: usize,
+    pub movement_cost: usize,
+    pub divide_cost: usize,
+    pub explode_requirement: usize,
+    pub death_release_coefficient: f64,
+    pub explode_amount: f64,
     tiles: Vec<Hex>,
 }
 
 impl Grid {
-    pub fn new(width: usize, height: usize, rng: &mut Isaac64Rng) -> Self {
+    pub fn new(width: usize,
+               height: usize,
+               consumption: f64,
+               spawn_rate: f64,
+               inhale_minimum: usize,
+               inhale_cap: usize,
+               movement_cost: usize,
+               divide_cost: usize,
+               explode_requirement: usize,
+               death_release_coefficient: f64,
+               explode_amount: f64,
+               rng: &mut Isaac64Rng)
+               -> Self {
         Grid {
             spawning: true,
-            spawn_rate: DEFAULT_SPAWN_RATE,
-            movement_cost: DEFAULT_MOVEMENT_COST,
             width: width,
             height: height,
+            consumption: consumption,
+            spawn_rate: spawn_rate,
+            inhale_minimum: inhale_minimum,
+            inhale_cap: inhale_cap,
+            movement_cost: movement_cost,
+            divide_cost: divide_cost,
+            explode_requirement: explode_requirement,
+            death_release_coefficient: death_release_coefficient,
+            explode_amount: explode_amount,
             tiles: randomizing_vec(width, height, rng),
         }
     }
@@ -147,11 +157,13 @@ impl Grid {
         if self.spawning {
             self.cycle_spawn(rng);
         }
+
         self.cycle_cells();
+
         self.cycle_decisions(rng);
-        for _ in 0..FLUID_CYCLES {
-            self.cycle_fluids();
-        }
+
+        self.cycle_fluids();
+
         self.cycle_death();
     }
 
@@ -213,6 +225,8 @@ impl Grid {
     fn cycle_decisions(&mut self, rng: &mut Isaac64Rng) {
         let g = GridCont(self as *mut Grid);
         let g = &g;
+        let explode_amount = self.explode_amount;
+        let explode_requirement = self.explode_requirement;
         let numcpus = num_cpus::get();
         // Compute the deltas resulting from the decision.
         crossbeam::scope(|scope| {
@@ -279,11 +293,11 @@ impl Grid {
                                         }
                                         Some(Decision { choice: Choice::Explode(way), .. }) => {
                                             if let Some(ref mut c) = this.cell {
-                                                if c.inhale >= EXPLODE_REQUIREMENT {
+                                                if c.inhale >= explode_requirement {
                                                     this.solution.diffuse[2] += if way {
-                                                        EXPLODE_AMOUNT
+                                                        explode_amount
                                                     } else {
-                                                        -EXPLODE_AMOUNT
+                                                        -explode_amount
                                                     };
                                                 }
                                             }
@@ -324,12 +338,12 @@ impl Grid {
                         // Apply movement and divide cost to source.
                         let inhale =
                             self.hex(mate.source.0, mate.source.1).cell.as_ref().unwrap().inhale;
-                        if inhale >= self.movement_cost + DIVIDE_COST {
+                        if inhale >= self.movement_cost + self.divide_cost {
                             self.hex_mut(mate.source.0, mate.source.1)
                                 .cell
                                 .as_mut()
                                 .unwrap()
-                                .inhale -= self.movement_cost + DIVIDE_COST;
+                                .inhale -= self.movement_cost + self.divide_cost;
                         } else {
                             self.hex_mut(mate.source.0, mate.source.1)
                                 .cell
@@ -350,12 +364,12 @@ impl Grid {
                                 .as_ref()
                                 .unwrap()
                                 .inhale;
-                            if inhale >= self.movement_cost + DIVIDE_COST {
+                            if inhale >= self.movement_cost + self.divide_cost {
                                 self.hex_mut(mate.source.0, mate.source.1)
                                     .cell
                                     .as_mut()
                                     .unwrap()
-                                    .inhale -= self.movement_cost + DIVIDE_COST;
+                                    .inhale -= self.movement_cost + self.divide_cost;
                             } else {
                                 self.hex_mut(mate.source.0, mate.source.1)
                                     .cell
@@ -436,11 +450,15 @@ impl Grid {
         let g = GridCont(self as *mut Grid);
         let g = &g;
         let numcpus = num_cpus::get();
+        let consumption = self.consumption;
         // Finish the cycle.
         crossbeam::scope(|scope| {
             for i in 0..numcpus {
                 scope.spawn(move || {
                     let g: &mut Grid = unsafe { mem::transmute(g.0) };
+                    let inhale_minimum = g.inhale_minimum;
+                    let inhale_cap = g.inhale_cap;
+                    let death_release_coefficient = g.death_release_coefficient;
                     for x in 0..g.width {
                         for y in (g.height * i / numcpus)..(g.height * (i + 1) / numcpus) {
                             let hex = g.hex_mut(x, y);
@@ -448,30 +466,31 @@ impl Grid {
                                 if hex.cell.as_ref().unwrap().suicide ||
                                    hex.solution.fluids[3] > KILL_FLUID_UPPER_THRESHOLD ||
                                    hex.solution.fluids[3] < KILL_FLUID_LOWER_THRESHOLD ||
-                                   hex.cell.as_ref().unwrap().inhale < INHALE_MINIMUM {
+                                   hex.cell.as_ref().unwrap().inhale < inhale_minimum {
                                     hex.solution.fluids[0] +=
-                                        DEATH_RELEASE_COEFFICIENT * CONSUMPTION *
+                                        death_release_coefficient * consumption *
                                         hex.cell.as_ref().unwrap().inhale as f64;
                                     hex.cell = None;
-                                } else if hex.solution.fluids[0] <= CONSUMPTION {
+                                } else if hex.solution.fluids[0] <= consumption {
                                     if hex.cell.as_ref().unwrap().inhale != 0 {
                                         hex.cell.as_mut().unwrap().inhale -= 1;
                                     } else {
                                         hex.cell = None;
                                     }
                                 } else {
-                                    hex.solution.fluids[0] -= CONSUMPTION;
-                                    if hex.solution.fluids[0] < SURVIVAL_THRESHOLD {
+                                    hex.solution.fluids[0] -= consumption;
+                                    // NOTE: This used to be survival threshold.
+                                    if hex.solution.fluids[0] < 0.0 {
                                         if hex.cell.as_ref().unwrap().inhale != 0 {
                                             hex.cell.as_mut().unwrap().inhale -= 1;
                                         } else {
                                             hex.solution.fluids[0] +=
-                                                DEATH_RELEASE_COEFFICIENT * CONSUMPTION *
+                                                death_release_coefficient * consumption *
                                                 hex.cell.as_ref().unwrap().inhale as f64;
                                             hex.cell = None;
                                         }
                                     } else {
-                                        if hex.cell.as_ref().unwrap().inhale < INHALE_CAP {
+                                        if hex.cell.as_ref().unwrap().inhale < inhale_cap {
                                             hex.cell.as_mut().unwrap().inhale += 1;
                                         }
                                     }

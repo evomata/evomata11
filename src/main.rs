@@ -35,10 +35,22 @@ use std::sync::mpsc::channel;
 
 use rand::{Isaac64Rng, SeedableRng};
 
-const DEFAULT_SCREEN_HEX_RATIO: f32 = 64.0;
+const DEFAULT_SCREEN_ZOOM_RATIO: f32 = 1.0;
 
-const GRID_WIDTH: usize = 192 * 3 / 2;
-const GRID_HEIGHT: usize = 125 * 3 / 2;
+const GRID_WIDTH: usize = 192 * 5 / 2;
+const GRID_HEIGHT: usize = 125 * 5 / 2;
+const DEFAULT_CONSUMPTION: f64 = 0.04;
+const SPAWN_DENSITY: f64 = 0.00001;
+const DEFAULT_SPAWN_RATE: f64 = SPAWN_DENSITY * GRID_WIDTH as f64 * GRID_HEIGHT as f64;
+const DEFAULT_INHALE_MINIMUM: usize = 500;
+const DEFAULT_INHALE_CAP: usize = 10000;
+const DEFAULT_MOVEMENT_COST: usize = 0;
+const DEFAULT_DIVIDE_COST: usize = 5;
+
+const DEFAULT_EXPLODE_REQUIREMENT: usize = 2100;
+const DEFAULT_EXPLODE_AMOUNT: f64 = 0.5;
+
+const DEFAULT_DEATH_RELEASE_COEFFICIENT: f64 = 1.0;
 
 // TODO: Figure out when lines are used and set it correctly.
 const SCROLL_LINES_RATIO: f32 = 0.707;
@@ -49,6 +61,9 @@ const GRID_SPAWN_MULTIPLY: f64 = 1.25;
 const SECONDS_BETWEEN_AUTOSAVES: u64 = 60 * 30;
 
 const MANUAL_FEED_AMOUNT: f64 = 5.0;
+
+// Ratio of width/height in a 2d circle tight-pack or a hex grid.
+const WIDTH_HEIGHT_RATIO: f32 = 0.86602540378;
 
 fn main() {
     use glium::DisplayBuild;
@@ -63,19 +78,43 @@ fn main() {
                 Err(e) => {
                     println!("Found grid file \"gridstate\" but failed to load grid: {}",
                              e);
-                    grid::Grid::new(GRID_WIDTH, GRID_HEIGHT, &mut rng)
+                    grid::Grid::new(GRID_WIDTH,
+                                    GRID_HEIGHT,
+                                    DEFAULT_CONSUMPTION,
+                                    DEFAULT_SPAWN_RATE,
+                                    DEFAULT_INHALE_MINIMUM,
+                                    DEFAULT_INHALE_CAP,
+                                    DEFAULT_MOVEMENT_COST,
+                                    DEFAULT_DIVIDE_COST,
+                                    DEFAULT_EXPLODE_REQUIREMENT,
+                                    DEFAULT_DEATH_RELEASE_COEFFICIENT,
+                                    DEFAULT_EXPLODE_AMOUNT,
+                                    &mut rng)
                 }
             }
         }
-        Err(_) => grid::Grid::new(GRID_WIDTH, GRID_HEIGHT, &mut rng),
+        Err(_) => {
+            grid::Grid::new(GRID_WIDTH,
+                            GRID_HEIGHT,
+                            DEFAULT_CONSUMPTION,
+                            DEFAULT_SPAWN_RATE,
+                            DEFAULT_INHALE_MINIMUM,
+                            DEFAULT_INHALE_CAP,
+                            DEFAULT_MOVEMENT_COST,
+                            DEFAULT_DIVIDE_COST,
+                            DEFAULT_EXPLODE_REQUIREMENT,
+                            DEFAULT_DEATH_RELEASE_COEFFICIENT,
+                            DEFAULT_EXPLODE_AMOUNT,
+                            &mut rng)
+        }
     };
     let display = glium::glutin::WindowBuilder::new().with_vsync().build_glium().unwrap();
     // window.set_cursor_state(glium::glutin::CursorState::Hide).ok().unwrap();
     let glowy = Renderer::new(&display);
 
-    let mut screen_hex_ratio = DEFAULT_SCREEN_HEX_RATIO;
+    let mut screen_hex_ratio = DEFAULT_SCREEN_ZOOM_RATIO * g.height as f32 * WIDTH_HEIGHT_RATIO;
 
-    let mut center = (0.5 * GRID_WIDTH as f32, 0.5 * GRID_HEIGHT as f32);
+    let mut center = (0.5 * g.width as f32, 0.5 * g.height as f32);
     let mut last_mouse_pos = (0, 0);
     let mut mouse_pressed = false;
 
@@ -99,12 +138,9 @@ fn main() {
         };
         target.as_mut().map_or_else(|| {}, |t| t.clear_color(0.0, 0.0, 0.0, 1.0));
 
-        // Ratio of width/height in a 2d circle tight-pack or a hex grid.
-        let width_height_ratio = 0.86602540378;
-
         let (screen_width, screen_height) = (screen_hex_ratio / hscale, screen_hex_ratio);
         let (hex_per_width_pixel, hex_per_height_pixel) =
-            (screen_width / dims.0 as f32, screen_height / width_height_ratio / dims.1 as f32);
+            (screen_width / dims.0 as f32, screen_height / WIDTH_HEIGHT_RATIO / dims.1 as f32);
 
         let center_mouse_coord = (dims.0 as f32 / 2.0, dims.1 as f32 / 2.0);
 
@@ -124,8 +160,8 @@ fn main() {
                     let render_tx = render_tx.clone();
                     scope.spawn(move || {
                             let mut v = Vec::new();
-                            for x in 0..GRID_WIDTH {
-                                for y in (GRID_HEIGHT * i / numcpus)..(GRID_HEIGHT * (i + 1) / numcpus) {
+                            for x in 0..g.width {
+                                for y in (g.height * i / numcpus)..(g.height * (i + 1) / numcpus) {
                                     append_circle(&mut v,
                                                   0.6,
                                                   0.6,
@@ -138,7 +174,7 @@ fn main() {
                                                                                        2.0 *
                                                                                        (x as f32 -
                                                                                         center.0),
-                                                                                       width_height_ratio *
+                                                                                       WIDTH_HEIGHT_RATIO *
                                                                                        (2.0 *
                                                                                         (y as f32 -
                                                                                          center.1 +
@@ -159,7 +195,7 @@ fn main() {
                                                                                            2.0 *
                                                                                            (x as f32 -
                                                                                             center.0),
-                                                                                           width_height_ratio *
+                                                                                           WIDTH_HEIGHT_RATIO *
                                                                                            (2.0 *
                                                                                             (y as f32 -
                                                                                              center.1 +
@@ -256,8 +292,8 @@ fn main() {
                         hex.0 + 0.25
                     },
                                hex.1);
-                    if hex.0 > 0.0 && hex.0 < GRID_WIDTH as f32 && hex.1 > 0.0 &&
-                       hex.1 < GRID_HEIGHT as f32 {
+                    if hex.0 > 0.0 && hex.0 < g.width as f32 && hex.1 > 0.0 &&
+                       hex.1 < g.height as f32 {
                         let hex = g.hex_mut(hex.0 as usize, hex.1 as usize);
                         hex.solution.fluids[0] += MANUAL_FEED_AMOUNT;
                         println!("New food: {}", hex.solution.fluids[0]);
@@ -328,8 +364,8 @@ fn main() {
                         hex.0 + 0.25
                     },
                                hex.1);
-                    if hex.0 > 0.0 && hex.0 < GRID_WIDTH as f32 && hex.1 > 0.0 &&
-                       hex.1 < GRID_HEIGHT as f32 {
+                    if hex.0 > 0.0 && hex.0 < g.width as f32 && hex.1 > 0.0 &&
+                       hex.1 < g.height as f32 {
                         println!("{:?}", g.hex(hex.0 as usize, hex.1 as usize));
                     }
                 }
