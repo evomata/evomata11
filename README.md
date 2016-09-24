@@ -2,6 +2,9 @@
 The 11th cellular automata created with the sole purpose of creating emergent phenomena through evolution.
 Uses a gray-scott reaction diffusion equation along with genetic algorithms.
 
+### After optimizations, at movement cost of 0, very interesting competition going on.
+![Image](http://i.imgur.com/R1ArJyv.png)
+
 ### Movement cost of 50. Cells can produce signals now and can diffuse differently on each side.
 ![Image](https://i.imgur.com/QMKfdsS.png)
 
