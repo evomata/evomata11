@@ -96,32 +96,6 @@ fn mutator(ins: &mut Ins, rng: &mut Isaac64Rng) {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct Decision {
-    pub mate: i64,
-    pub node: i64,
-    // This will be ran through a sigmoid
-    pub rate: i64,
-    pub signal: i64,
-    pub connect_signal: i64,
-    pub sever_choice: i64,
-    pub pull: i64,
-}
-
-impl Default for Decision {
-    fn default() -> Self {
-        Decision {
-            mate: -1,
-            node: -1,
-            rate: 0,
-            signal: 0,
-            connect_signal: 0,
-            sever_choice: 0,
-            pull: 0,
-        }
-    }
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Brain {
     #[serde(serialize_with = "mep_serializer", deserialize_with = "mep_deserializer")]
     pub mep: MepType,

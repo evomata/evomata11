@@ -7,19 +7,19 @@ pub const TOTAL_FLUIDS: usize = 8;
 pub const NORMAL_DIFFUSION: [f64; TOTAL_FLUIDS] = [0.0004 * ACCURACY,
                                                    1.0,
                                                    0.5,
-                                                   5.0 * ACCURACY,
+                                                   4.0 * ACCURACY,
                                                    SIGNAL_FLUID_DIFFUSION * ACCURACY,
                                                    SIGNAL_FLUID_DIFFUSION * ACCURACY,
                                                    SIGNAL_FLUID_DIFFUSION * ACCURACY,
                                                    SIGNAL_FLUID_DIFFUSION * ACCURACY];
 pub const KILL_FLUID_NORMAL: f64 = 0.05;
-pub const KILL_FLUID_DECAY: f64 = 0.2 * ACCURACY;
+pub const KILL_FLUID_DECAY: f64 = 0.15 * ACCURACY;
 pub const KILL_FLUID_UPPER_THRESHOLD: f64 = 0.052;
 pub const KILL_FLUID_LOWER_THRESHOLD: f64 = 0.048;
 pub const SIGNAL_FLUID_PRODUCTION: f64 = 0.5;
 pub const SIGNAL_FLUID_DIFFUSION: f64 = 0.06;
 pub const SIGNAL_FLUID_DECAY: f64 = 2.0 * ACCURACY;
-pub const B_FOOD_RATE: f64 = 0.005 * ACCURACY;
+pub const B_FOOD_RATE: f64 = 0.0015 * ACCURACY;
 
 const TIMESTEP: f64 = 0.2 / ACCURACY;
 
