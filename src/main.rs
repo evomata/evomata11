@@ -60,7 +60,7 @@ const GRID_SPAWN_MULTIPLY: f64 = 1.25;
 
 const SECONDS_BETWEEN_AUTOSAVES: u64 = 60 * 30;
 
-const MANUAL_FEED_AMOUNT: f64 = 100.0;
+const MANUAL_FEED_AMOUNT: f64 = 5000.0;
 
 // Ratio of width/height in a 2d circle tight-pack or a hex grid.
 const WIDTH_HEIGHT_RATIO: f32 = 0.86602540378;
