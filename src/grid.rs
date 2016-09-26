@@ -9,7 +9,7 @@ use crossbeam;
 
 const KILL_FLUID_COLOR_NORMAL: f64 = 0.01;
 const SIGNAL_FLUID_SQRT_NORMAL: f64 = 5.0;
-const SIGNAL_FLUID_COLOR_NORMAL: f32 = 1.0;
+const SIGNAL_FLUID_COLOR_NORMAL: f32 = 0.4;
 const FOOD_FLUID_COLOR_NORMAL: f64 = 600.0;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
