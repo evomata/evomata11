@@ -308,6 +308,16 @@ fn main() {
                     g.spawn_rate /= GRID_SPAWN_MULTIPLY;
                     println!("New spawn rate: {}", g.spawn_rate);
                 }
+                Event::KeyboardInput(ElementState::Pressed, _, Some(VKC::X)) => {
+                    g.explode_requirement =
+                        (g.explode_requirement as f64 * GRID_EXPLODE_MULTIPLY) as usize;
+                    println!("New explode requirement: {}", g.explode_requirement);
+                }
+                Event::KeyboardInput(ElementState::Pressed, _, Some(VKC::Z)) => {
+                    g.explode_requirement =
+                        (g.explode_requirement as f64 / GRID_EXPLODE_MULTIPLY) as usize;
+                    println!("New explode requirement: {}", g.explode_requirement);
+                }
                 Event::KeyboardInput(ElementState::Pressed, _, Some(VKC::Q)) => {
                     g.explode_amount *= GRID_EXPLODE_MULTIPLY;
                     println!("New explode amount: {}", g.explode_amount);
