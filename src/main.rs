@@ -57,6 +57,7 @@ const SCROLL_LINES_RATIO: f32 = 0.707;
 const SCROLL_PIXELS_RATIO: f32 = 0.707;
 
 const GRID_SPAWN_MULTIPLY: f64 = 1.25;
+const GRID_EXPLODE_MULTIPLY: f64 = 1.25;
 
 const SECONDS_BETWEEN_AUTOSAVES: u64 = 60 * 30;
 
@@ -306,6 +307,14 @@ fn main() {
                 Event::KeyboardInput(ElementState::Pressed, _, Some(VKC::D)) => {
                     g.spawn_rate /= GRID_SPAWN_MULTIPLY;
                     println!("New spawn rate: {}", g.spawn_rate);
+                }
+                Event::KeyboardInput(ElementState::Pressed, _, Some(VKC::Q)) => {
+                    g.explode_amount *= GRID_EXPLODE_MULTIPLY;
+                    println!("New explode amount: {}", g.explode_amount);
+                }
+                Event::KeyboardInput(ElementState::Pressed, _, Some(VKC::A)) => {
+                    g.explode_amount /= GRID_EXPLODE_MULTIPLY;
+                    println!("New explode amount: {}", g.explode_amount);
                 }
                 Event::KeyboardInput(ElementState::Pressed, _, Some(VKC::P)) => {
                     g.movement_cost += 1;
