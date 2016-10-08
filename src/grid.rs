@@ -294,7 +294,7 @@ impl Grid {
                                         Some(Decision { choice: Choice::Explode(way), .. }) => {
                                             if let Some(ref mut c) = this.cell {
                                                 if c.inhale >= explode_requirement {
-                                                    this.solution.diffuse[2] += if way {
+                                                    this.solution.diffuse[3] += if way {
                                                         explode_amount
                                                     } else {
                                                         -explode_amount
