@@ -291,24 +291,28 @@ impl Grid {
                                                 }
                                             }
                                         }
-                                        Some(Decision { choice: Choice::Explode(way), .. }) => {
-                                            if let Some(ref mut c) = this.cell {
-                                                if c.inhale >= explode_requirement {
-                                                    this.solution.diffuse[3] += if way {
-                                                        explode_amount
-                                                    } else {
-                                                        -explode_amount
-                                                    };
-                                                }
-                                            }
-                                        }
-                                        Some(Decision { choice: Choice::Suicide, .. }) => {
-                                            if let Some(ref mut c) = this.cell {
-                                                c.suicide = true;
-                                            }
-                                        }
                                         _ => {}
                                     }
+                                }
+                            } else {
+                                match this.decision {
+                                    Some(Decision { choice: Choice::Explode(way), .. }) => {
+                                        if let Some(ref mut c) = this.cell {
+                                            if c.inhale >= explode_requirement {
+                                                this.solution.diffuse[3] += if way {
+                                                    explode_amount
+                                                } else {
+                                                    -explode_amount
+                                                };
+                                            }
+                                        }
+                                    }
+                                    Some(Decision { choice: Choice::Suicide, .. }) => {
+                                        if let Some(ref mut c) = this.cell {
+                                            c.suicide = true;
+                                        }
+                                    }
+                                    _ => {}
                                 }
                             }
                         }
