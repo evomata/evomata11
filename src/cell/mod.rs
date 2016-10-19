@@ -106,10 +106,6 @@ impl Cell {
         }
     }
 
-    pub fn color(&self) -> [f32; 4] {
-        [1.0, 1.0, 1.0, 1.0]
-    }
-
     pub fn decide(&mut self, fluids: [&[f64; TOTAL_FLUIDS]; 7], cells: &[bool; 6]) -> Decision {
         use std::f64::{MAX, MIN};
         let nc = |n: bool| if n {

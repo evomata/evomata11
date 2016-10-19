@@ -183,11 +183,12 @@ fn main() {
                                                                       na::Vector1::new(0.0))
                                                       .to_homogeneous());
 
-                                    if let Some(ref c) = g.hex(x, y).cell {
+                                    if g.hex(x, y).cell.is_some() {
                                         append_circle(&mut v,
                                                       0.3,
                                                       0.3,
-                                                      c.color(),
+                                                      //c.color(),
+                                                      g.hex(x, y).signal_color(),
                                                       &na::Isometry2::new(na::Vector2::new(if y % 2 == 0 {
                                                                                                1.5
                                                                                            } else {

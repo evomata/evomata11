@@ -8,8 +8,8 @@ use num_cpus;
 use crossbeam;
 
 const KILL_FLUID_COLOR_NORMAL: f64 = 0.01;
-const SIGNAL_FLUID_SQRT_NORMAL: f64 = 5.0;
-const SIGNAL_FLUID_COLOR_NORMAL: f32 = 0.4;
+// const SIGNAL_FLUID_SQRT_NORMAL: f64 = 5.0;
+const SIGNAL_FLUID_COLOR_COEFFICIENT: f32 = 300.0;
 const FOOD_FLUID_COLOR_NORMAL: f64 = 600.0;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -39,17 +39,26 @@ unsafe impl Send for GridCont {}
 
 impl Hex {
     pub fn color(&self) -> [f32; 4] {
+        let signal = self.signal_color();
+        let primary = self.primary_color();
+        [signal[0] + primary[0], signal[1] + primary[1], signal[2] + primary[2], 1.0]
+    }
+
+    pub fn primary_color(&self) -> [f32; 4] {
         let killf = ((self.solution.fluids[3] - KILL_FLUID_NORMAL) /
                      KILL_FLUID_COLOR_NORMAL) as f32;
-        let mut ocolors = [killf.abs(),
-                           (self.solution.fluids[0] / FOOD_FLUID_COLOR_NORMAL) as f32,
-                           0.25 * self.solution.fluids[2] as f32,
-                           1.0];
+        [killf.abs(),
+         (self.solution.fluids[0] / FOOD_FLUID_COLOR_NORMAL) as f32,
+         0.25 * self.solution.fluids[2] as f32,
+         1.0]
+    }
+
+    pub fn signal_color(&self) -> [f32; 4] {
+        let mut ocolors = [0.0, 0.0, 0.0, 1.0];
         let signal_colors = [[0.0, 0.5, 0.5], [0.5, 0.5, 0.5], [0.5, 0.0, 0.5], [0.5, 0.5, 0.0]];
         for i in 0..4 {
-            let signalf = ((self.solution.fluids[4 + i] / SIGNAL_FLUID_SQRT_NORMAL) as f32)
-                .abs()
-                .sqrt() / SIGNAL_FLUID_COLOR_NORMAL;
+            let signalf = (self.solution.fluids[4 + i] as f32).abs() *
+                          SIGNAL_FLUID_COLOR_COEFFICIENT;
             for j in 0..3 {
                 ocolors[j] += signal_colors[i][j] * signalf;
             }
