@@ -13,3 +13,5 @@
 # Save state for evomata11
 /gridstate
 /grids/
+/.idea/
+/evomata11.iml

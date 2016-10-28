@@ -1,7 +1,6 @@
 mod brain;
 
 use rand::{Isaac64Rng, Rng};
-use mli::SISO;
 use itertools::Itertools;
 use super::fluid::{NORMAL_DIFFUSION, TOTAL_FLUIDS};
 
@@ -107,6 +106,7 @@ impl Cell {
     }
 
     pub fn decide(&mut self, fluids: [&[f64; TOTAL_FLUIDS]; 7], cells: &[bool; 6]) -> Decision {
+        use mli::Stateless;
         use std::f64::{MAX, MIN};
         let nc = |n: bool| if n {
             1.0
@@ -190,7 +190,7 @@ impl Cell {
                       self.brain.memory[2],
                       self.brain.memory[3]];
 
-        let mut compute = self.brain.mep.compute(&inputs[..]);
+        let mut compute = self.brain.mep.process(&inputs[..]);
 
         let mut coefficients = [[0.0; TOTAL_FLUIDS]; 6];
         for da in &mut coefficients {
