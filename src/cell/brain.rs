@@ -1,6 +1,6 @@
 use rand::{Rng, Rand, Isaac64Rng};
-use mli;
 use mli::{MateRand, Stateless, Mutate};
+use mli_mep::Mep;
 
 // 0.0, 0.5, -0.5, 1.0, -1.0, 2.0, -2.0, MAX, MIN
 pub const CONST_INPUTS: usize = 9;
@@ -15,8 +15,6 @@ pub const DEFAULT_MUTATE_LAMBDA: usize = 8;
 pub const DEFAULT_CROSSOVER_POINTS: usize = 1;
 pub const INTERNAL_INSTRUCTIONS: usize = 128;
 const MUTATE_PROBABILITY: f64 = 1.0;
-
-type MepType = mli::Mep<Ins>;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Ins {
@@ -104,14 +102,14 @@ impl<R> Mutate<R> for Ins
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Brain {
-    pub mep: MepType,
+    pub mep: Mep<Ins>,
     pub memory: [f64; TOTAL_MEMORY],
 }
 
 impl Brain {
     pub fn new(rng: &mut Isaac64Rng) -> Self {
         Brain {
-            mep: mli::Mep::new(TOTAL_INPUTS,
+            mep: Mep::new(TOTAL_INPUTS,
                                TOTAL_OUTPUTS,
                                INTERNAL_INSTRUCTIONS,
                                DEFAULT_MUTATE_LAMBDA,

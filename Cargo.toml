@@ -21,3 +21,4 @@ serde_derive = "0.8"
 bincode = "0.6"
 
 mli = {git = "https://github.com/vadixidav/mli"}
+mli_mep = {git = "https://github.com/vadixidav/mli_mep"}

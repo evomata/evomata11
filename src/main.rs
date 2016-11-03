@@ -18,6 +18,7 @@ extern crate glium;
 extern crate nalgebra;
 extern crate noise;
 extern crate mli;
+extern crate mli_mep;
 extern crate num_cpus;
 extern crate crossbeam;
 
