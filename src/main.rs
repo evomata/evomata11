@@ -1,7 +1,8 @@
-#![feature(custom_derive, plugin)]
-#![plugin(serde_macros)]
+#![feature(plugin)]
+#![feature(proc_macro)]
 
-extern crate serde;
+#[macro_use]
+extern crate serde_derive;
 extern crate bincode;
 extern crate rand;
 #[macro_use]
@@ -57,6 +58,7 @@ const SCROLL_LINES_RATIO: f32 = 0.707;
 const SCROLL_PIXELS_RATIO: f32 = 0.707;
 
 const GRID_SPAWN_MULTIPLY: f64 = 1.25;
+const GRID_EXPLODE_MULTIPLY: f64 = 1.25;
 
 const SECONDS_BETWEEN_AUTOSAVES: u64 = 60 * 30;
 
@@ -182,11 +184,12 @@ fn main() {
                                                                       na::Vector1::new(0.0))
                                                       .to_homogeneous());
 
-                                    if let Some(ref c) = g.hex(x, y).cell {
+                                    if g.hex(x, y).cell.is_some() {
                                         append_circle(&mut v,
                                                       0.3,
                                                       0.3,
-                                                      c.color(),
+                                                      //c.color(),
+                                                      g.hex(x, y).signal_color(),
                                                       &na::Isometry2::new(na::Vector2::new(if y % 2 == 0 {
                                                                                                1.5
                                                                                            } else {
@@ -306,6 +309,24 @@ fn main() {
                 Event::KeyboardInput(ElementState::Pressed, _, Some(VKC::D)) => {
                     g.spawn_rate /= GRID_SPAWN_MULTIPLY;
                     println!("New spawn rate: {}", g.spawn_rate);
+                }
+                Event::KeyboardInput(ElementState::Pressed, _, Some(VKC::X)) => {
+                    g.explode_requirement =
+                        (g.explode_requirement as f64 * GRID_EXPLODE_MULTIPLY) as usize;
+                    println!("New explode requirement: {}", g.explode_requirement);
+                }
+                Event::KeyboardInput(ElementState::Pressed, _, Some(VKC::Z)) => {
+                    g.explode_requirement =
+                        (g.explode_requirement as f64 / GRID_EXPLODE_MULTIPLY) as usize;
+                    println!("New explode requirement: {}", g.explode_requirement);
+                }
+                Event::KeyboardInput(ElementState::Pressed, _, Some(VKC::Q)) => {
+                    g.explode_amount *= GRID_EXPLODE_MULTIPLY;
+                    println!("New explode amount: {}", g.explode_amount);
+                }
+                Event::KeyboardInput(ElementState::Pressed, _, Some(VKC::A)) => {
+                    g.explode_amount /= GRID_EXPLODE_MULTIPLY;
+                    println!("New explode amount: {}", g.explode_amount);
                 }
                 Event::KeyboardInput(ElementState::Pressed, _, Some(VKC::P)) => {
                     g.movement_cost += 1;
