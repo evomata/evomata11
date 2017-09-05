@@ -6,10 +6,6 @@ extern crate serde_derive;
 extern crate bincode;
 extern crate rand;
 #[macro_use]
-extern crate custom_derive;
-#[macro_use]
-extern crate enum_derive;
-#[macro_use]
 extern crate enum_primitive;
 extern crate num;
 extern crate itertools;
@@ -73,45 +69,54 @@ fn main() {
     let mut rng = Isaac64Rng::from_seed(&[2, 5, 3, 12454]);
     let mut g = match File::open("gridstate") {
         Ok(mut f) => {
-            match bincode::serde::deserialize_from(&mut f, bincode::SizeLimit::Infinite) {
+            match bincode::deserialize_from(&mut f, bincode::Infinite) {
                 Ok(t) => {
                     println!("Found grid file \"gridstate\" and loaded grid.");
                     t
                 }
                 Err(e) => {
-                    println!("Found grid file \"gridstate\" but failed to load grid: {}",
-                             e);
-                    grid::Grid::new(GRID_WIDTH,
-                                    GRID_HEIGHT,
-                                    DEFAULT_CONSUMPTION,
-                                    DEFAULT_SPAWN_RATE,
-                                    DEFAULT_INHALE_MINIMUM,
-                                    DEFAULT_INHALE_CAP,
-                                    DEFAULT_MOVEMENT_COST,
-                                    DEFAULT_DIVIDE_COST,
-                                    DEFAULT_EXPLODE_REQUIREMENT,
-                                    DEFAULT_DEATH_RELEASE_COEFFICIENT,
-                                    DEFAULT_EXPLODE_AMOUNT,
-                                    &mut rng)
+                    println!(
+                        "Found grid file \"gridstate\" but failed to load grid: {}",
+                        e
+                    );
+                    grid::Grid::new(
+                        GRID_WIDTH,
+                        GRID_HEIGHT,
+                        DEFAULT_CONSUMPTION,
+                        DEFAULT_SPAWN_RATE,
+                        DEFAULT_INHALE_MINIMUM,
+                        DEFAULT_INHALE_CAP,
+                        DEFAULT_MOVEMENT_COST,
+                        DEFAULT_DIVIDE_COST,
+                        DEFAULT_EXPLODE_REQUIREMENT,
+                        DEFAULT_DEATH_RELEASE_COEFFICIENT,
+                        DEFAULT_EXPLODE_AMOUNT,
+                        &mut rng,
+                    )
                 }
             }
         }
         Err(_) => {
-            grid::Grid::new(GRID_WIDTH,
-                            GRID_HEIGHT,
-                            DEFAULT_CONSUMPTION,
-                            DEFAULT_SPAWN_RATE,
-                            DEFAULT_INHALE_MINIMUM,
-                            DEFAULT_INHALE_CAP,
-                            DEFAULT_MOVEMENT_COST,
-                            DEFAULT_DIVIDE_COST,
-                            DEFAULT_EXPLODE_REQUIREMENT,
-                            DEFAULT_DEATH_RELEASE_COEFFICIENT,
-                            DEFAULT_EXPLODE_AMOUNT,
-                            &mut rng)
+            grid::Grid::new(
+                GRID_WIDTH,
+                GRID_HEIGHT,
+                DEFAULT_CONSUMPTION,
+                DEFAULT_SPAWN_RATE,
+                DEFAULT_INHALE_MINIMUM,
+                DEFAULT_INHALE_CAP,
+                DEFAULT_MOVEMENT_COST,
+                DEFAULT_DIVIDE_COST,
+                DEFAULT_EXPLODE_REQUIREMENT,
+                DEFAULT_DEATH_RELEASE_COEFFICIENT,
+                DEFAULT_EXPLODE_AMOUNT,
+                &mut rng,
+            )
         }
     };
-    let display = glium::glutin::WindowBuilder::new().with_vsync().build_glium().unwrap();
+    let display = glium::glutin::WindowBuilder::new()
+        .with_vsync()
+        .build_glium()
+        .unwrap();
     // window.set_cursor_state(glium::glutin::CursorState::Hide).ok().unwrap();
     let glowy = Renderer::new(&display);
 
@@ -139,16 +144,25 @@ fn main() {
         } else {
             None
         };
-        target.as_mut().map_or_else(|| {}, |t| t.clear_color(0.0, 0.0, 0.0, 1.0));
+        target.as_mut().map_or_else(
+            || {},
+            |t| t.clear_color(0.0, 0.0, 0.0, 1.0),
+        );
 
         let (screen_width, screen_height) = (screen_hex_ratio / hscale, screen_hex_ratio);
-        let (hex_per_width_pixel, hex_per_height_pixel) =
-            (screen_width / dims.0 as f32, screen_height / WIDTH_HEIGHT_RATIO / dims.1 as f32);
+        let (hex_per_width_pixel, hex_per_height_pixel) = (
+            screen_width / dims.0 as f32,
+            screen_height / WIDTH_HEIGHT_RATIO /
+                dims.1 as f32,
+        );
 
         let center_mouse_coord = (dims.0 as f32 / 2.0, dims.1 as f32 / 2.0);
 
-        let projection =
-            [[1.0 / screen_width, 0.0, 0.0], [0.0, 1.0 / screen_height, 0.0], [0.0, 0.0, 1.0]];
+        let projection = [
+            [1.0 / screen_width, 0.0, 0.0],
+            [0.0, 1.0 / screen_height, 0.0],
+            [0.0, 0.0, 1.0],
+        ];
 
         if rendering_enabled {
 
@@ -214,14 +228,19 @@ fn main() {
                 }
 
                 for _ in 0..numcpus {
-                    glowy.render_qbeziers_flat(target.as_mut().unwrap(),
-                                               na::Matrix3::one().as_ref().clone(),
-                                               projection,
-                                               &render_rx.recv().unwrap_or_else(|e| {
-                                                   panic!("Error: Render threads unexpectedly closed: \
+                    glowy.render_qbeziers_flat(
+                        target.as_mut().unwrap(),
+                        na::Matrix3::one().as_ref().clone(),
+                        projection,
+                        &render_rx.recv().unwrap_or_else(|e| {
+                            panic!(
+                                "Error: Render threads unexpectedly closed: \
                                                            {}",
-                                                          e)
-                                               })[..]);
+                                e
+                            )
+                        })
+                            [..],
+                    );
                 }
             });
         }
@@ -239,7 +258,7 @@ fn main() {
 
             match File::create("gridstate") {
                 Ok(mut f) => {
-                    match bincode::serde::serialize_into(&mut f, &g, bincode::SizeLimit::Infinite) {
+                    match bincode::serialize_into(&mut f, &g, bincode::Infinite) {
                         Ok(()) => println!("Successfully saved grid to \"gridstate\"."),
                         Err(e) => println!("Failed to save grid state: {}", e),
                     }
@@ -257,8 +276,7 @@ fn main() {
                     last_autosave = now;
                     match File::open("gridstate") {
                         Ok(mut f) => {
-                            match bincode::serde::deserialize_from(&mut f,
-                                                                   bincode::SizeLimit::Infinite) {
+                            match bincode::deserialize_from(&mut f, bincode::Infinite) {
                                 Ok(t) => {
                                     g = t;
                                     println!("Successfully loaded grid from \"gridstate\".");
@@ -273,9 +291,7 @@ fn main() {
                     last_autosave = now;
                     match File::create("gridstate") {
                         Ok(mut f) => {
-                            match bincode::serde::serialize_into(&mut f,
-                                                                 &g,
-                                                                 bincode::SizeLimit::Infinite) {
+                            match bincode::serialize_into(&mut f, &g, bincode::Infinite) {
                                 Ok(()) => println!("Successfully saved grid to \"gridstate\"."),
                                 Err(e) => println!("Failed to save grid state: {}", e),
                             }
@@ -284,20 +300,27 @@ fn main() {
                     }
                 }
                 Event::KeyboardInput(ElementState::Pressed, _, Some(VKC::F)) => {
-                    let relative_coord = (last_mouse_pos.0 as f32 - center_mouse_coord.0,
-                                          last_mouse_pos.1 as f32 - center_mouse_coord.1);
+                    let relative_coord = (
+                        last_mouse_pos.0 as f32 - center_mouse_coord.0,
+                        last_mouse_pos.1 as f32 - center_mouse_coord.1,
+                    );
 
-                    let hex = (center.0 + relative_coord.0 * hex_per_width_pixel,
-                               center.1 - relative_coord.1 * hex_per_height_pixel);
+                    let hex = (
+                        center.0 + relative_coord.0 * hex_per_width_pixel,
+                        center.1 - relative_coord.1 * hex_per_height_pixel,
+                    );
                     // Adjust the width based on the height.
-                    let hex = (if hex.1 as isize % 2 == 0 {
-                        hex.0 - 0.25
-                    } else {
-                        hex.0 + 0.25
-                    },
-                               hex.1);
+                    let hex = (
+                        if hex.1 as isize % 2 == 0 {
+                            hex.0 - 0.25
+                        } else {
+                            hex.0 + 0.25
+                        },
+                        hex.1,
+                    );
                     if hex.0 > 0.0 && hex.0 < g.width as f32 && hex.1 > 0.0 &&
-                       hex.1 < g.height as f32 {
+                        hex.1 < g.height as f32
+                    {
                         let hex = g.hex_mut(hex.0 as usize, hex.1 as usize);
                         hex.solution.fluids[0] += MANUAL_FEED_AMOUNT;
                         println!("New food: {}", hex.solution.fluids[0]);
@@ -344,21 +367,21 @@ fn main() {
                 }
                 Event::KeyboardInput(ElementState::Pressed, _, Some(VKC::S)) => {
                     g.spawning = !g.spawning;
-                    println!("Spawning {}",
-                             if g.spawning {
-                                 "enabled"
-                             } else {
-                                 "disabled"
-                             });
+                    println!(
+                        "Spawning {}",
+                        if g.spawning { "enabled" } else { "disabled" }
+                    );
                 }
                 Event::KeyboardInput(ElementState::Pressed, _, Some(VKC::T)) => {
                     rendering_enabled = !rendering_enabled;
-                    println!("Rendering {}",
-                             if rendering_enabled {
-                                 "enabled"
-                             } else {
-                                 "disabled"
-                             });
+                    println!(
+                        "Rendering {}",
+                        if rendering_enabled {
+                            "enabled"
+                        } else {
+                            "disabled"
+                        }
+                    );
                 }
                 Event::MouseWheel(MouseScrollDelta::LineDelta(_, lines), _) => {
                     screen_hex_ratio -= lines * SCROLL_LINES_RATIO;
@@ -374,20 +397,27 @@ fn main() {
                     last_mouse_pos = (x, y);
                 }
                 Event::MouseInput(ElementState::Released, MouseButton::Left) => {
-                    let relative_coord = (last_mouse_pos.0 as f32 - center_mouse_coord.0,
-                                          last_mouse_pos.1 as f32 - center_mouse_coord.1);
+                    let relative_coord = (
+                        last_mouse_pos.0 as f32 - center_mouse_coord.0,
+                        last_mouse_pos.1 as f32 - center_mouse_coord.1,
+                    );
 
-                    let hex = (center.0 + relative_coord.0 * hex_per_width_pixel,
-                               center.1 - relative_coord.1 * hex_per_height_pixel);
+                    let hex = (
+                        center.0 + relative_coord.0 * hex_per_width_pixel,
+                        center.1 - relative_coord.1 * hex_per_height_pixel,
+                    );
                     // Adjust the width based on the height.
-                    let hex = (if hex.1 as isize % 2 == 0 {
-                        hex.0 - 0.25
-                    } else {
-                        hex.0 + 0.25
-                    },
-                               hex.1);
+                    let hex = (
+                        if hex.1 as isize % 2 == 0 {
+                            hex.0 - 0.25
+                        } else {
+                            hex.0 + 0.25
+                        },
+                        hex.1,
+                    );
                     if hex.0 > 0.0 && hex.0 < g.width as f32 && hex.1 > 0.0 &&
-                       hex.1 < g.height as f32 {
+                        hex.1 < g.height as f32
+                    {
                         println!("{:?}", g.hex(hex.0 as usize, hex.1 as usize));
                     }
                 }
@@ -407,105 +437,110 @@ fn main() {
     }
 }
 
-fn append_circle(v: &mut Vec<QBezier>,
-                 radius: f32,
-                 circle_scale: f32,
-                 color: [f32; 4],
-                 modelview: &na::Matrix3<f32>) {
+fn append_circle(
+    v: &mut Vec<QBezier>,
+    radius: f32,
+    circle_scale: f32,
+    color: [f32; 4],
+    modelview: &na::Matrix3<f32>,
+) {
     let transform = |n: [f32; 2]| {
-        let na::Vector3 { x, y, .. } =
-            *modelview * na::Vector3::new(n[0] * circle_scale, n[1] * circle_scale, 1.0);
+        let na::Vector3 { x, y, .. } = *modelview *
+            na::Vector3::new(n[0] * circle_scale, n[1] * circle_scale, 1.0);
         [x, y]
     };
-    v.extend([QBezier {
-                  position0: transform([0.0, -1.0]),
-                  position1: transform([0.5773502691896256, -1.0]),
-                  position2: transform([0.8660254037844386, -0.5]),
-                  inner_color0: color,
-                  inner_color1: color,
-                  falloff_color0: color,
-                  falloff_color1: color,
-                  falloff0: 0.25,
-                  falloff1: 0.25,
-                  falloff_radius0: radius,
-                  falloff_radius1: radius,
-                  inner_radius0: 0.0,
-                  inner_radius1: 0.0,
-              },
-              QBezier {
-                  position0: transform([0.8660254037844386, -0.5]),
-                  position1: transform([1.1547005383792515, 0.0]),
-                  position2: transform([0.8660254037844387, 0.5]),
-                  inner_color0: color,
-                  inner_color1: color,
-                  falloff_color0: color,
-                  falloff_color1: color,
-                  falloff0: 0.25,
-                  falloff1: 0.25,
-                  falloff_radius0: radius,
-                  falloff_radius1: radius,
-                  inner_radius0: 0.0,
-                  inner_radius1: 0.0,
-              },
-              QBezier {
-                  position0: transform([0.8660254037844387, 0.5]),
-                  position1: transform([0.5773502691896261, 1.0]),
-                  position2: transform([0.0, 1.0]),
-                  inner_color0: color,
-                  inner_color1: color,
-                  falloff_color0: color,
-                  falloff_color1: color,
-                  falloff0: 0.25,
-                  falloff1: 0.25,
-                  falloff_radius0: radius,
-                  falloff_radius1: radius,
-                  inner_radius0: 0.0,
-                  inner_radius1: 0.0,
-              },
-              QBezier {
-                  position0: transform([0.0, 1.0]),
-                  position1: transform([-0.5773502691896254, 1.0]),
-                  position2: transform([-0.8660254037844384, 0.5]),
-                  inner_color0: color,
-                  inner_color1: color,
-                  falloff_color0: color,
-                  falloff_color1: color,
-                  falloff0: 0.25,
-                  falloff1: 0.25,
-                  falloff_radius0: radius,
-                  falloff_radius1: radius,
-                  inner_radius0: 0.0,
-                  inner_radius1: 0.0,
-              },
-              QBezier {
-                  position0: transform([-0.8660254037844384, 0.5]),
-                  position1: transform([-1.1547005383792515, 0.0]),
-                  position2: transform([-0.866025403784439, -0.5]),
-                  inner_color0: color,
-                  inner_color1: color,
-                  falloff_color0: color,
-                  falloff_color1: color,
-                  falloff0: 0.25,
-                  falloff1: 0.25,
-                  falloff_radius0: radius,
-                  falloff_radius1: radius,
-                  inner_radius0: 0.0,
-                  inner_radius1: 0.0,
-              },
-              QBezier {
-                  position0: transform([-0.866025403784439, -0.5]),
-                  position1: transform([-0.5773502691896263, -1.0]),
-                  position2: transform([-0.0, -1.0]),
-                  inner_color0: color,
-                  inner_color1: color,
-                  falloff_color0: color,
-                  falloff_color1: color,
-                  falloff0: 0.25,
-                  falloff1: 0.25,
-                  falloff_radius0: radius,
-                  falloff_radius1: radius,
-                  inner_radius0: 0.0,
-                  inner_radius1: 0.0,
-              }]
-        .into_iter());
+    v.extend(
+        [
+            QBezier {
+                position0: transform([0.0, -1.0]),
+                position1: transform([0.5773502691896256, -1.0]),
+                position2: transform([0.8660254037844386, -0.5]),
+                inner_color0: color,
+                inner_color1: color,
+                falloff_color0: color,
+                falloff_color1: color,
+                falloff0: 0.25,
+                falloff1: 0.25,
+                falloff_radius0: radius,
+                falloff_radius1: radius,
+                inner_radius0: 0.0,
+                inner_radius1: 0.0,
+            },
+            QBezier {
+                position0: transform([0.8660254037844386, -0.5]),
+                position1: transform([1.1547005383792515, 0.0]),
+                position2: transform([0.8660254037844387, 0.5]),
+                inner_color0: color,
+                inner_color1: color,
+                falloff_color0: color,
+                falloff_color1: color,
+                falloff0: 0.25,
+                falloff1: 0.25,
+                falloff_radius0: radius,
+                falloff_radius1: radius,
+                inner_radius0: 0.0,
+                inner_radius1: 0.0,
+            },
+            QBezier {
+                position0: transform([0.8660254037844387, 0.5]),
+                position1: transform([0.5773502691896261, 1.0]),
+                position2: transform([0.0, 1.0]),
+                inner_color0: color,
+                inner_color1: color,
+                falloff_color0: color,
+                falloff_color1: color,
+                falloff0: 0.25,
+                falloff1: 0.25,
+                falloff_radius0: radius,
+                falloff_radius1: radius,
+                inner_radius0: 0.0,
+                inner_radius1: 0.0,
+            },
+            QBezier {
+                position0: transform([0.0, 1.0]),
+                position1: transform([-0.5773502691896254, 1.0]),
+                position2: transform([-0.8660254037844384, 0.5]),
+                inner_color0: color,
+                inner_color1: color,
+                falloff_color0: color,
+                falloff_color1: color,
+                falloff0: 0.25,
+                falloff1: 0.25,
+                falloff_radius0: radius,
+                falloff_radius1: radius,
+                inner_radius0: 0.0,
+                inner_radius1: 0.0,
+            },
+            QBezier {
+                position0: transform([-0.8660254037844384, 0.5]),
+                position1: transform([-1.1547005383792515, 0.0]),
+                position2: transform([-0.866025403784439, -0.5]),
+                inner_color0: color,
+                inner_color1: color,
+                falloff_color0: color,
+                falloff_color1: color,
+                falloff0: 0.25,
+                falloff1: 0.25,
+                falloff_radius0: radius,
+                falloff_radius1: radius,
+                inner_radius0: 0.0,
+                inner_radius1: 0.0,
+            },
+            QBezier {
+                position0: transform([-0.866025403784439, -0.5]),
+                position1: transform([-0.5773502691896263, -1.0]),
+                position2: transform([-0.0, -1.0]),
+                inner_color0: color,
+                inner_color1: color,
+                falloff_color0: color,
+                falloff_color1: color,
+                falloff0: 0.25,
+                falloff1: 0.25,
+                falloff_radius0: radius,
+                falloff_radius1: radius,
+                inner_radius0: 0.0,
+                inner_radius1: 0.0,
+            },
+        ].into_iter(),
+    );
 }

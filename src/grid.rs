@@ -41,24 +41,36 @@ impl Hex {
     pub fn color(&self) -> [f32; 4] {
         let signal = self.signal_color();
         let primary = self.primary_color();
-        [signal[0] + primary[0], signal[1] + primary[1], signal[2] + primary[2], 1.0]
+        [
+            signal[0] + primary[0],
+            signal[1] + primary[1],
+            signal[2] + primary[2],
+            1.0,
+        ]
     }
 
     pub fn primary_color(&self) -> [f32; 4] {
-        let killf = ((self.solution.fluids[3] - KILL_FLUID_NORMAL) /
-                     KILL_FLUID_COLOR_NORMAL) as f32;
-        [killf.abs(),
-         (self.solution.fluids[0] / FOOD_FLUID_COLOR_NORMAL) as f32,
-         0.25 * self.solution.fluids[2] as f32,
-         1.0]
+        let killf = ((self.solution.fluids[3] - KILL_FLUID_NORMAL) / KILL_FLUID_COLOR_NORMAL) as
+            f32;
+        [
+            killf.abs(),
+            (self.solution.fluids[0] / FOOD_FLUID_COLOR_NORMAL) as f32,
+            0.25 * self.solution.fluids[2] as f32,
+            1.0,
+        ]
     }
 
     pub fn signal_color(&self) -> [f32; 4] {
         let mut ocolors = [0.0, 0.0, 0.0, 1.0];
-        let signal_colors = [[0.0, 0.5, 0.5], [0.5, 0.5, 0.5], [0.5, 0.0, 0.5], [0.5, 0.5, 0.0]];
+        let signal_colors = [
+            [0.0, 0.5, 0.5],
+            [0.5, 0.5, 0.5],
+            [0.5, 0.0, 0.5],
+            [0.5, 0.5, 0.0],
+        ];
         for i in 0..4 {
             let signalf = (self.solution.fluids[4 + i] as f32).abs() *
-                          SIGNAL_FLUID_COLOR_COEFFICIENT;
+                SIGNAL_FLUID_COLOR_COEFFICIENT;
             for j in 0..3 {
                 ocolors[j] += signal_colors[i][j] * signalf;
             }
@@ -85,19 +97,20 @@ pub struct Grid {
 }
 
 impl Grid {
-    pub fn new(width: usize,
-               height: usize,
-               consumption: f64,
-               spawn_rate: f64,
-               inhale_minimum: usize,
-               inhale_cap: usize,
-               movement_cost: usize,
-               divide_cost: usize,
-               explode_requirement: usize,
-               death_release_coefficient: f64,
-               explode_amount: f64,
-               rng: &mut Isaac64Rng)
-               -> Self {
+    pub fn new(
+        width: usize,
+        height: usize,
+        consumption: f64,
+        spawn_rate: f64,
+        inhale_minimum: usize,
+        inhale_cap: usize,
+        movement_cost: usize,
+        divide_cost: usize,
+        explode_requirement: usize,
+        death_release_coefficient: f64,
+        explode_amount: f64,
+        rng: &mut Isaac64Rng,
+    ) -> Self {
         Grid {
             spawning: true,
             width: width,
@@ -128,38 +141,52 @@ impl Grid {
     }
 
     fn hex_and_neighbors(&mut self, x: usize, y: usize) -> (&mut Hex, [&Hex; 6]) {
-        (unsafe { mem::transmute(self.hex_mut(x, y)) },
-         if y % 2 == 0 {
-            [// UpRight
-             self.hex((x + self.width + 1) % self.width,
-                      (y + self.height - 1) % self.height),
-             // UpLeft
-             self.hex(x, (y + self.height - 1) % self.height),
-             // Left
-             self.hex((x + self.width - 1) % self.width, y),
-             // DownLeft
-             self.hex(x, (y + self.height + 1) % self.height),
-             // DownRight
-             self.hex((x + self.width + 1) % self.width,
-                      (y + self.height + 1) % self.height),
-             // Right
-             self.hex((x + self.width + 1) % self.width, y)]
-        } else {
-            [// UpRight
-             self.hex(x, (y + self.height - 1) % self.height),
-             // UpLeft
-             self.hex((x + self.width - 1) % self.width,
-                      (y + self.height - 1) % self.height),
-             // Left
-             self.hex((x + self.width - 1) % self.width, y),
-             // DownLeft
-             self.hex((x + self.width - 1) % self.width,
-                      (y + self.height + 1) % self.height),
-             // DownRight
-             self.hex(x, (y + self.height + 1) % self.height),
-             // Right
-             self.hex((x + self.width + 1) % self.width, y)]
-        })
+        (
+            unsafe { mem::transmute(self.hex_mut(x, y)) },
+            if y % 2 == 0 {
+                [
+                    // UpRight
+                    self.hex(
+                        (x + self.width + 1) % self.width,
+                        (y + self.height - 1) % self.height,
+                    ),
+                    // UpLeft
+                    self.hex(x, (y + self.height - 1) % self.height),
+                    // Left
+                    self.hex((x + self.width - 1) % self.width, y),
+                    // DownLeft
+                    self.hex(x, (y + self.height + 1) % self.height),
+                    // DownRight
+                    self.hex(
+                        (x + self.width + 1) % self.width,
+                        (y + self.height + 1) % self.height,
+                    ),
+                    // Right
+                    self.hex((x + self.width + 1) % self.width, y),
+                ]
+            } else {
+                [
+                    // UpRight
+                    self.hex(x, (y + self.height - 1) % self.height),
+                    // UpLeft
+                    self.hex(
+                        (x + self.width - 1) % self.width,
+                        (y + self.height - 1) % self.height,
+                    ),
+                    // Left
+                    self.hex((x + self.width - 1) % self.width, y),
+                    // DownLeft
+                    self.hex(
+                        (x + self.width - 1) % self.width,
+                        (y + self.height + 1) % self.height,
+                    ),
+                    // DownRight
+                    self.hex(x, (y + self.height + 1) % self.height),
+                    // Right
+                    self.hex((x + self.width + 1) % self.width, y),
+                ]
+            },
+        )
     }
 
     pub fn cycle(&mut self, rng: &mut Isaac64Rng) {
@@ -198,36 +225,40 @@ impl Grid {
         let g = GridCont(self as *mut Grid);
         let g = &g;
         let numcpus = num_cpus::get();
-        crossbeam::scope(|scope| {
-            for i in 0..numcpus {
-                scope.spawn(move || {
-                    let g: &mut Grid = unsafe { mem::transmute(g.0) };
-                    for x in 0..g.width {
-                        for y in (g.height * i / numcpus)..(g.height * (i + 1) / numcpus) {
-                            let (this, neighbors) = g.hex_and_neighbors(x, y);
-                            this.decision = if let Some(ref mut this_cell) = this.cell {
-                                let neighbor_presents = [neighbors[0].cell.is_some(),
-                                                         neighbors[1].cell.is_some(),
-                                                         neighbors[2].cell.is_some(),
-                                                         neighbors[3].cell.is_some(),
-                                                         neighbors[4].cell.is_some(),
-                                                         neighbors[5].cell.is_some()];
+        crossbeam::scope(|scope| for i in 0..numcpus {
+            scope.spawn(move || {
+                let g: &mut Grid = unsafe { mem::transmute(g.0) };
+                for x in 0..g.width {
+                    for y in (g.height * i / numcpus)..(g.height * (i + 1) / numcpus) {
+                        let (this, neighbors) = g.hex_and_neighbors(x, y);
+                        this.decision = if let Some(ref mut this_cell) = this.cell {
+                            let neighbor_presents = [
+                                neighbors[0].cell.is_some(),
+                                neighbors[1].cell.is_some(),
+                                neighbors[2].cell.is_some(),
+                                neighbors[3].cell.is_some(),
+                                neighbors[4].cell.is_some(),
+                                neighbors[5].cell.is_some(),
+                            ];
 
-                                Some(this_cell.decide([&this.solution.fluids,
-                                                       &neighbors[0].solution.fluids,
-                                                       &neighbors[1].solution.fluids,
-                                                       &neighbors[2].solution.fluids,
-                                                       &neighbors[3].solution.fluids,
-                                                       &neighbors[4].solution.fluids,
-                                                       &neighbors[5].solution.fluids],
-                                                      &neighbor_presents))
-                            } else {
-                                None
-                            }
+                            Some(this_cell.decide(
+                                [
+                                    &this.solution.fluids,
+                                    &neighbors[0].solution.fluids,
+                                    &neighbors[1].solution.fluids,
+                                    &neighbors[2].solution.fluids,
+                                    &neighbors[3].solution.fluids,
+                                    &neighbors[4].solution.fluids,
+                                    &neighbors[5].solution.fluids,
+                                ],
+                                &neighbor_presents,
+                            ))
+                        } else {
+                            None
                         }
                     }
-                });
-            }
+                }
+            });
         });
     }
 
@@ -249,29 +280,41 @@ impl Grid {
                             // Clear the movements from the previous cycle.
                             this.delta.movement_attempts.clear();
                             this.delta.mate_attempts.clear();
-                            this.solution.coefficients = if let Some(ref decision) = this.decision {
-                                decision.coefficients
-                            } else {
-                                // Set the diffusion coefficients to the normal values.
-                                [NORMAL_DIFFUSION; 6]
-                            };
+                            this.solution.coefficients =
+                                if let Some(ref decision) = this.decision {
+                                    decision.coefficients
+                                } else {
+                                    // Set the diffusion coefficients to the normal values.
+                                    [NORMAL_DIFFUSION; 6]
+                                };
 
                             // Only add movements here if no cell is present.
                             if this.cell.is_none() {
                                 // Add any neighbor movements to the movement_attempts vector.
-                                for (n, &facing) in neighbors.iter().zip(&[Direction::DownLeft,
-                                                                           Direction::DownRight,
-                                                                           Direction::Right,
-                                                                           Direction::UpRight,
-                                                                           Direction::UpLeft,
-                                                                           Direction::Left]) {
+                                for (n, &facing) in neighbors.iter().zip(
+                                    &[
+                                        Direction::DownLeft,
+                                        Direction::DownRight,
+                                        Direction::Right,
+                                        Direction::UpRight,
+                                        Direction::UpLeft,
+                                        Direction::Left,
+                                    ],
+                                )
+                                {
                                     match n.decision {
-                                        Some(Decision { choice: Choice::Move(direction), .. }) => {
+                                        Some(Decision {
+                                                 choice: Choice::Move(direction), ..
+                                             }) => {
                                             // It attempted to move into this hex cell.
                                             if facing == direction {
-                                                this.delta
-                                                    .movement_attempts
-                                                    .push(in_direction(x, y, width, height, facing.flip()));
+                                                this.delta.movement_attempts.push(in_direction(
+                                                    x,
+                                                    y,
+                                                    width,
+                                                    height,
+                                                    facing.flip(),
+                                                ));
 
                                                 // No need to continue if we reach 2 attempts.
                                                 if this.delta.movement_attempts.len() == 2 {
@@ -279,20 +322,28 @@ impl Grid {
                                                 }
                                             }
                                         }
-                                        Some(Decision { choice: Choice::Divide { mate, spawn }, .. }) => {
+                                        Some(Decision {
+                                                 choice: Choice::Divide { mate, spawn }, ..
+                                             }) => {
                                             // It attempted to spawn into this hex cell.
                                             if facing == spawn {
-                                                let source = in_direction(x, y, width, height, facing.flip());;
-                                                this.delta
-                                                    .mate_attempts
-                                                    .push(Mate {
-                                                        mate: in_direction(source.0,
-                                                                           source.1,
-                                                                           width,
-                                                                           height,
-                                                                           mate),
-                                                        source: source,
-                                                    });
+                                                let source = in_direction(
+                                                    x,
+                                                    y,
+                                                    width,
+                                                    height,
+                                                    facing.flip(),
+                                                );
+                                                this.delta.mate_attempts.push(Mate {
+                                                    mate: in_direction(
+                                                        source.0,
+                                                        source.1,
+                                                        width,
+                                                        height,
+                                                        mate,
+                                                    ),
+                                                    source: source,
+                                                });
 
                                                 // No need to continue if we reach 2 attempts.
                                                 if this.delta.mate_attempts.len() == 2 {
@@ -344,13 +395,16 @@ impl Grid {
                     } else {
                         self.hex_mut(x, y).cell.as_mut().unwrap().inhale = 0;
                     }
-                    // Handle mating.
+                // Handle mating.
                 } else if self.hex(x, y).delta.mate_attempts.len() == 1 {
                     let mate = self.hex(x, y).delta.mate_attempts[0].clone();
                     self.hex_mut(x, y).cell = if mate.mate == (x, y) {
                         // Apply movement and divide cost to source.
-                        let inhale =
-                            self.hex(mate.source.0, mate.source.1).cell.as_ref().unwrap().inhale;
+                        let inhale = self.hex(mate.source.0, mate.source.1)
+                            .cell
+                            .as_ref()
+                            .unwrap()
+                            .inhale;
                         if inhale >= self.movement_cost + self.divide_cost {
                             self.hex_mut(mate.source.0, mate.source.1)
                                 .cell
@@ -364,11 +418,13 @@ impl Grid {
                                 .unwrap()
                                 .inhale = 0;
                         }
-                        Some(self.hex_mut(mate.source.0, mate.source.1)
-                            .cell
-                            .as_mut()
-                            .unwrap()
-                            .divide(rng))
+                        Some(
+                            self.hex_mut(mate.source.0, mate.source.1)
+                                .cell
+                                .as_mut()
+                                .unwrap()
+                                .divide(rng),
+                        )
                     } else {
                         if self.hex(mate.mate.0, mate.mate.1).cell.is_some() {
                             // Apply movement and divide cost to source.
@@ -391,18 +447,19 @@ impl Grid {
                                     .inhale = 0;
                             }
                             // This is safe so long as the cells arent the same.
-                            Some(unsafe {
-                                    mem::transmute::<_,
-                                                     &mut Hex>(self.hex_mut(mate.source.0, mate.source.1))
-                                }
-                                .cell
-                                .as_mut()
-                                .unwrap()
-                                .mate(&self.hex(mate.mate.0, mate.mate.1)
-                                          .cell
-                                          .as_ref()
-                                          .unwrap(),
-                                      rng))
+                            Some(
+                                unsafe {
+                                    mem::transmute::<_, &mut Hex>(
+                                        self.hex_mut(mate.source.0, mate.source.1),
+                                    )
+                                }.cell
+                                    .as_mut()
+                                    .unwrap()
+                                    .mate(
+                                        &self.hex(mate.mate.0, mate.mate.1).cell.as_ref().unwrap(),
+                                        rng,
+                                    ),
+                            )
                         } else {
                             None
                         }
@@ -420,42 +477,38 @@ impl Grid {
         let g = &g;
         let numcpus = num_cpus::get();
         // Then update diffusion.
-        crossbeam::scope(|scope| {
-            for i in 0..numcpus {
-                scope.spawn(move || {
-                    let g: &mut Grid = unsafe { mem::transmute(g.0) };
-                    for x in 0..g.width {
-                        for y in (g.height * i / numcpus)..(g.height * (i + 1) / numcpus) {
-                            let (this, neighbors) = g.hex_and_neighbors(x, y);
+        crossbeam::scope(|scope| for i in 0..numcpus {
+            scope.spawn(move || {
+                let g: &mut Grid = unsafe { mem::transmute(g.0) };
+                for x in 0..g.width {
+                    for y in (g.height * i / numcpus)..(g.height * (i + 1) / numcpus) {
+                        let (this, neighbors) = g.hex_and_neighbors(x, y);
 
-                            for (i, n) in neighbors.iter().enumerate() {
-                                this.solution.diffuse_from(&n.solution,
-                                                           match n.cell {
-                                                               Some(_) => {
-                                                                   DiffusionType::FlatSignals
-                                                               }
-                                                               None => DiffusionType::DynSignals,
-                                                           },
-                                                           (i + 3) % 6);
-                            }
+                        for (i, n) in neighbors.iter().enumerate() {
+                            this.solution.diffuse_from(
+                                &n.solution,
+                                match n.cell {
+                                    Some(_) => DiffusionType::FlatSignals,
+                                    None => DiffusionType::DynSignals,
+                                },
+                                (i + 3) % 6,
+                            );
                         }
                     }
-                });
-            }
+                }
+            });
         });
 
         // Finish the cycle.
-        crossbeam::scope(|scope| {
-            for i in 0..numcpus {
-                scope.spawn(move || {
-                    let g: &mut Grid = unsafe { mem::transmute(g.0) };
-                    for x in 0..g.width {
-                        for y in (g.height * i / numcpus)..(g.height * (i + 1) / numcpus) {
-                            g.hex_mut(x, y).solution.end_cycle();
-                        }
+        crossbeam::scope(|scope| for i in 0..numcpus {
+            scope.spawn(move || {
+                let g: &mut Grid = unsafe { mem::transmute(g.0) };
+                for x in 0..g.width {
+                    for y in (g.height * i / numcpus)..(g.height * (i + 1) / numcpus) {
+                        g.hex_mut(x, y).solution.end_cycle();
                     }
-                });
-            }
+                }
+            });
         });
     }
 
@@ -477,11 +530,12 @@ impl Grid {
                             let hex = g.hex_mut(x, y);
                             if hex.cell.is_some() {
                                 if hex.cell.as_ref().unwrap().suicide ||
-                                   hex.solution.fluids[3] > KILL_FLUID_UPPER_THRESHOLD ||
-                                   hex.solution.fluids[3] < KILL_FLUID_LOWER_THRESHOLD ||
-                                   hex.cell.as_ref().unwrap().inhale < inhale_minimum {
-                                    hex.solution.fluids[0] +=
-                                        death_release_coefficient * consumption *
+                                    hex.solution.fluids[3] > KILL_FLUID_UPPER_THRESHOLD ||
+                                    hex.solution.fluids[3] < KILL_FLUID_LOWER_THRESHOLD ||
+                                    hex.cell.as_ref().unwrap().inhale < inhale_minimum
+                                {
+                                    hex.solution.fluids[0] += death_release_coefficient *
+                                        consumption *
                                         hex.cell.as_ref().unwrap().inhale as f64;
                                     hex.cell = None;
                                 } else if hex.solution.fluids[0] <= consumption {
@@ -497,8 +551,8 @@ impl Grid {
                                         if hex.cell.as_ref().unwrap().inhale != 0 {
                                             hex.cell.as_mut().unwrap().inhale -= 1;
                                         } else {
-                                            hex.solution.fluids[0] +=
-                                                death_release_coefficient * consumption *
+                                            hex.solution.fluids[0] += death_release_coefficient *
+                                                consumption *
                                                 hex.cell.as_ref().unwrap().inhale as f64;
                                             hex.cell = None;
                                         }
@@ -524,15 +578,19 @@ fn randomizing_vec(width: usize, height: usize, rng: &mut Isaac64Rng) -> Vec<Hex
         .cartesian_product((0..width))
         .map(|(x, y)| {
             Hex {
-                solution: Solution::new([0.0,
-                                         1.0,
-                                         noise.apply(&seeds[0], &[x as f64, y as f64]),
-                                         KILL_FLUID_NORMAL,
-                                         0.0,
-                                         0.0,
-                                         0.0,
-                                         0.0],
-                                        [NORMAL_DIFFUSION; 6]),
+                solution: Solution::new(
+                    [
+                        0.0,
+                        1.0,
+                        noise.apply(&seeds[0], &[x as f64, y as f64]),
+                        KILL_FLUID_NORMAL,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                    ],
+                    [NORMAL_DIFFUSION; 6],
+                ),
                 cell: None,
                 decision: None,
                 delta: Delta {
@@ -544,13 +602,16 @@ fn randomizing_vec(width: usize, height: usize, rng: &mut Isaac64Rng) -> Vec<Hex
         .collect_vec()
 }
 
-fn in_direction(x: usize,
-                y: usize,
-                width: usize,
-                height: usize,
-                direction: Direction)
-                -> (usize, usize) {
+fn in_direction(
+    x: usize,
+    y: usize,
+    width: usize,
+    height: usize,
+    direction: Direction,
+) -> (usize, usize) {
     let diff = direction.delta(y % 2 == 0);
-    (((width + x) as isize + diff.0) as usize % width,
-     ((height + y) as isize + diff.1) as usize % height)
+    (
+        ((width + x) as isize + diff.0) as usize % width,
+        ((height + y) as isize + diff.1) as usize % height,
+    )
 }

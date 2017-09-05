@@ -16,9 +16,9 @@ enum_derive = "0.1.7"
 enum_primitive = "0.1.0"
 noise = "0.2.0"
 num_cpus = "1.0.0"
-serde = "0.8"
-serde_derive = "0.8"
-bincode = "0.6"
+serde = "1.0"
+serde_derive = "1.0"
+bincode = "0.8"
 
-mli = {git = "https://github.com/vadixidav/mli"}
-mli_mep = {git = "https://github.com/vadixidav/mli_mep"}
+mli = "0.10"
+mli_mep = "0.10"

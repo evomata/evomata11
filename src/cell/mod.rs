@@ -22,35 +22,11 @@ impl Direction {
     pub fn delta(&self, even_y: bool) -> (isize, isize) {
         use self::Direction::*;
         match *self {
-            UpRight => {
-                if even_y {
-                    (1, -1)
-                } else {
-                    (0, -1)
-                }
-            }
-            UpLeft => {
-                if even_y {
-                    (0, -1)
-                } else {
-                    (-1, -1)
-                }
-            }
+            UpRight => if even_y { (1, -1) } else { (0, -1) },
+            UpLeft => if even_y { (0, -1) } else { (-1, -1) },
             Left => (-1, 0),
-            DownLeft => {
-                if even_y {
-                    (0, 1)
-                } else {
-                    (-1, 1)
-                }
-            }
-            DownRight => {
-                if even_y {
-                    (1, 1)
-                } else {
-                    (0, 1)
-                }
-            }
+            DownLeft => if even_y { (0, 1) } else { (-1, 1) },
+            DownRight => if even_y { (1, 1) } else { (0, 1) },
             Right => (1, 0),
         }
     }
@@ -71,10 +47,7 @@ impl Direction {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Choice {
     // If the mate and spawn direction are the same, cause a divide.
-    Divide {
-        mate: Direction,
-        spawn: Direction,
-    },
+    Divide { mate: Direction, spawn: Direction },
     Move(Direction),
     Explode(bool),
     Suicide,
@@ -108,87 +81,85 @@ impl Cell {
     pub fn decide(&mut self, fluids: [&[f64; TOTAL_FLUIDS]; 7], cells: &[bool; 6]) -> Decision {
         use mli::Stateless;
         use std::f64::{MAX, MIN};
-        let nc = |n: bool| if n {
-            1.0
-        } else {
-            0.0
-        };
-        let inputs = [0.0,
-                      0.5,
-                      -0.5,
-                      1.0,
-                      -1.0,
-                      2.0,
-                      -2.0,
-                      MAX,
-                      MIN,
-                      self.inhale as f64,
-                      fluids[0][0],
-                      fluids[0][1],
-                      fluids[0][2],
-                      fluids[0][3],
-                      fluids[0][4],
-                      fluids[0][5],
-                      fluids[0][6],
-                      fluids[0][7],
-                      fluids[(0 + self.turn) % 6 + 1][0],
-                      fluids[(0 + self.turn) % 6 + 1][1],
-                      fluids[(0 + self.turn) % 6 + 1][2],
-                      fluids[(0 + self.turn) % 6 + 1][3],
-                      fluids[(0 + self.turn) % 6 + 1][4],
-                      fluids[(0 + self.turn) % 6 + 1][5],
-                      fluids[(0 + self.turn) % 6 + 1][6],
-                      fluids[(0 + self.turn) % 6 + 1][7],
-                      fluids[(1 + self.turn) % 6 + 1][0],
-                      fluids[(1 + self.turn) % 6 + 1][1],
-                      fluids[(1 + self.turn) % 6 + 1][2],
-                      fluids[(1 + self.turn) % 6 + 1][3],
-                      fluids[(1 + self.turn) % 6 + 1][4],
-                      fluids[(1 + self.turn) % 6 + 1][5],
-                      fluids[(1 + self.turn) % 6 + 1][6],
-                      fluids[(1 + self.turn) % 6 + 1][7],
-                      fluids[(2 + self.turn) % 6 + 1][0],
-                      fluids[(2 + self.turn) % 6 + 1][1],
-                      fluids[(2 + self.turn) % 6 + 1][2],
-                      fluids[(2 + self.turn) % 6 + 1][3],
-                      fluids[(2 + self.turn) % 6 + 1][4],
-                      fluids[(2 + self.turn) % 6 + 1][5],
-                      fluids[(2 + self.turn) % 6 + 1][6],
-                      fluids[(2 + self.turn) % 6 + 1][7],
-                      fluids[(3 + self.turn) % 6 + 1][0],
-                      fluids[(3 + self.turn) % 6 + 1][1],
-                      fluids[(3 + self.turn) % 6 + 1][2],
-                      fluids[(3 + self.turn) % 6 + 1][3],
-                      fluids[(3 + self.turn) % 6 + 1][4],
-                      fluids[(3 + self.turn) % 6 + 1][5],
-                      fluids[(3 + self.turn) % 6 + 1][6],
-                      fluids[(3 + self.turn) % 6 + 1][7],
-                      fluids[(4 + self.turn) % 6 + 1][0],
-                      fluids[(4 + self.turn) % 6 + 1][1],
-                      fluids[(4 + self.turn) % 6 + 1][2],
-                      fluids[(4 + self.turn) % 6 + 1][3],
-                      fluids[(4 + self.turn) % 6 + 1][4],
-                      fluids[(4 + self.turn) % 6 + 1][5],
-                      fluids[(4 + self.turn) % 6 + 1][6],
-                      fluids[(4 + self.turn) % 6 + 1][7],
-                      fluids[(5 + self.turn) % 6 + 1][0],
-                      fluids[(5 + self.turn) % 6 + 1][1],
-                      fluids[(5 + self.turn) % 6 + 1][2],
-                      fluids[(5 + self.turn) % 6 + 1][3],
-                      fluids[(5 + self.turn) % 6 + 1][4],
-                      fluids[(5 + self.turn) % 6 + 1][5],
-                      fluids[(5 + self.turn) % 6 + 1][6],
-                      fluids[(5 + self.turn) % 6 + 1][7],
-                      nc(cells[(0 + self.turn) % 6]),
-                      nc(cells[(1 + self.turn) % 6]),
-                      nc(cells[(2 + self.turn) % 6]),
-                      nc(cells[(3 + self.turn) % 6]),
-                      nc(cells[(4 + self.turn) % 6]),
-                      nc(cells[(5 + self.turn) % 6]),
-                      self.brain.memory[0],
-                      self.brain.memory[1],
-                      self.brain.memory[2],
-                      self.brain.memory[3]];
+        let nc = |n: bool| if n { 1.0 } else { 0.0 };
+        let inputs = [
+            0.0,
+            0.5,
+            -0.5,
+            1.0,
+            -1.0,
+            2.0,
+            -2.0,
+            MAX,
+            MIN,
+            self.inhale as f64,
+            fluids[0][0],
+            fluids[0][1],
+            fluids[0][2],
+            fluids[0][3],
+            fluids[0][4],
+            fluids[0][5],
+            fluids[0][6],
+            fluids[0][7],
+            fluids[(0 + self.turn) % 6 + 1][0],
+            fluids[(0 + self.turn) % 6 + 1][1],
+            fluids[(0 + self.turn) % 6 + 1][2],
+            fluids[(0 + self.turn) % 6 + 1][3],
+            fluids[(0 + self.turn) % 6 + 1][4],
+            fluids[(0 + self.turn) % 6 + 1][5],
+            fluids[(0 + self.turn) % 6 + 1][6],
+            fluids[(0 + self.turn) % 6 + 1][7],
+            fluids[(1 + self.turn) % 6 + 1][0],
+            fluids[(1 + self.turn) % 6 + 1][1],
+            fluids[(1 + self.turn) % 6 + 1][2],
+            fluids[(1 + self.turn) % 6 + 1][3],
+            fluids[(1 + self.turn) % 6 + 1][4],
+            fluids[(1 + self.turn) % 6 + 1][5],
+            fluids[(1 + self.turn) % 6 + 1][6],
+            fluids[(1 + self.turn) % 6 + 1][7],
+            fluids[(2 + self.turn) % 6 + 1][0],
+            fluids[(2 + self.turn) % 6 + 1][1],
+            fluids[(2 + self.turn) % 6 + 1][2],
+            fluids[(2 + self.turn) % 6 + 1][3],
+            fluids[(2 + self.turn) % 6 + 1][4],
+            fluids[(2 + self.turn) % 6 + 1][5],
+            fluids[(2 + self.turn) % 6 + 1][6],
+            fluids[(2 + self.turn) % 6 + 1][7],
+            fluids[(3 + self.turn) % 6 + 1][0],
+            fluids[(3 + self.turn) % 6 + 1][1],
+            fluids[(3 + self.turn) % 6 + 1][2],
+            fluids[(3 + self.turn) % 6 + 1][3],
+            fluids[(3 + self.turn) % 6 + 1][4],
+            fluids[(3 + self.turn) % 6 + 1][5],
+            fluids[(3 + self.turn) % 6 + 1][6],
+            fluids[(3 + self.turn) % 6 + 1][7],
+            fluids[(4 + self.turn) % 6 + 1][0],
+            fluids[(4 + self.turn) % 6 + 1][1],
+            fluids[(4 + self.turn) % 6 + 1][2],
+            fluids[(4 + self.turn) % 6 + 1][3],
+            fluids[(4 + self.turn) % 6 + 1][4],
+            fluids[(4 + self.turn) % 6 + 1][5],
+            fluids[(4 + self.turn) % 6 + 1][6],
+            fluids[(4 + self.turn) % 6 + 1][7],
+            fluids[(5 + self.turn) % 6 + 1][0],
+            fluids[(5 + self.turn) % 6 + 1][1],
+            fluids[(5 + self.turn) % 6 + 1][2],
+            fluids[(5 + self.turn) % 6 + 1][3],
+            fluids[(5 + self.turn) % 6 + 1][4],
+            fluids[(5 + self.turn) % 6 + 1][5],
+            fluids[(5 + self.turn) % 6 + 1][6],
+            fluids[(5 + self.turn) % 6 + 1][7],
+            nc(cells[(0 + self.turn) % 6]),
+            nc(cells[(1 + self.turn) % 6]),
+            nc(cells[(2 + self.turn) % 6]),
+            nc(cells[(3 + self.turn) % 6]),
+            nc(cells[(4 + self.turn) % 6]),
+            nc(cells[(5 + self.turn) % 6]),
+            self.brain.memory[0],
+            self.brain.memory[1],
+            self.brain.memory[2],
+            self.brain.memory[3],
+        ];
 
         let mut compute = self.brain.mep.process(&inputs[..]);
 
@@ -230,7 +201,8 @@ impl Cell {
         let suicide_attempt = compute.next().unwrap();
 
         // Handle turn immediately so they can turn to stimuli.
-        if let Some(dir) = turn_directions.iter()
+        if let Some(dir) = turn_directions
+            .iter()
             .cloned()
             .enumerate()
             .fold((None, 0.0), |best, n| if n.1 > best.1 {
@@ -238,18 +210,20 @@ impl Cell {
             } else {
                 best
             })
-            .0 {
+            .0
+        {
             self.turn = dir;
         }
 
         self.brain.memory.iter_mut().set_from(compute);
         Decision {
-            choice: match [move_attempt,
-                           divide_attempt,
-                           mate_attempt,
-                           explode_attempt.abs(),
-                           suicide_attempt]
-                .iter()
+            choice: match [
+                move_attempt,
+                divide_attempt,
+                mate_attempt,
+                explode_attempt.abs(),
+                suicide_attempt,
+            ].iter()
                 .cloned()
                 .enumerate()
                 .fold((None, 0.0), |best, n| if n.1 > best.1 {
@@ -259,29 +233,36 @@ impl Cell {
                 })
                 .0 {
                 Some(0) => {
-                    Choice::Move(move_directions[..]
-                        .iter()
-                        .cycle()
-                        .skip(1 + self.turn)
-                        .take(5)
-                        .cloned()
-                        .zip([Direction::UpRight,
-                              Direction::UpLeft,
-                              Direction::Left,
-                              Direction::DownLeft,
-                              Direction::DownRight,
-                              Direction::Right]
+                    Choice::Move(
+                        move_directions[..]
                             .iter()
                             .cycle()
-                            .skip(self.turn)
-                            .take(6))
-                        .fold((move_directions[self.turn], Direction::UpRight),
-                              |(bestval, bestdir), (val, &dir)| if val > bestval {
-                                  (val, dir)
-                              } else {
-                                  (bestval, bestdir)
-                              })
-                        .1)
+                            .skip(1 + self.turn)
+                            .take(5)
+                            .cloned()
+                            .zip(
+                                [
+                                    Direction::UpRight,
+                                    Direction::UpLeft,
+                                    Direction::Left,
+                                    Direction::DownLeft,
+                                    Direction::DownRight,
+                                    Direction::Right,
+                                ].iter()
+                                    .cycle()
+                                    .skip(self.turn)
+                                    .take(6),
+                            )
+                            .fold(
+                                (move_directions[self.turn], Direction::UpRight),
+                                |(bestval, bestdir), (val, &dir)| if val > bestval {
+                                    (val, dir)
+                                } else {
+                                    (bestval, bestdir)
+                                },
+                            )
+                            .1,
+                    )
                 }
                 Some(1) => {
                     let direction = spawn_directions[..]
@@ -290,22 +271,27 @@ impl Cell {
                         .skip(1 + self.turn)
                         .take(5)
                         .cloned()
-                        .zip([Direction::UpRight,
-                              Direction::UpLeft,
-                              Direction::Left,
-                              Direction::DownLeft,
-                              Direction::DownRight,
-                              Direction::Right]
-                            .iter()
-                            .cycle()
-                            .skip(self.turn)
-                            .take(6))
-                        .fold((spawn_directions[self.turn], Direction::UpRight),
-                              |(bestval, bestdir), (val, &dir)| if val > bestval {
-                                  (val, dir)
-                              } else {
-                                  (bestval, bestdir)
-                              })
+                        .zip(
+                            [
+                                Direction::UpRight,
+                                Direction::UpLeft,
+                                Direction::Left,
+                                Direction::DownLeft,
+                                Direction::DownRight,
+                                Direction::Right,
+                            ].iter()
+                                .cycle()
+                                .skip(self.turn)
+                                .take(6),
+                        )
+                        .fold(
+                            (spawn_directions[self.turn], Direction::UpRight),
+                            |(bestval, bestdir), (val, &dir)| if val > bestval {
+                                (val, dir)
+                            } else {
+                                (bestval, bestdir)
+                            },
+                        )
                         .1;
                     Choice::Divide {
                         mate: direction,
@@ -320,22 +306,27 @@ impl Cell {
                             .skip(1 + self.turn)
                             .take(5)
                             .cloned()
-                            .zip([Direction::UpRight,
-                                  Direction::UpLeft,
-                                  Direction::Left,
-                                  Direction::DownLeft,
-                                  Direction::DownRight,
-                                  Direction::Right]
-                                .iter()
-                                .cycle()
-                                .skip(self.turn)
-                                .take(6))
-                            .fold((mate_directions[self.turn], Direction::UpRight),
-                                  |(bestval, bestdir), (val, &dir)| if val > bestval {
-                                      (val, dir)
-                                  } else {
-                                      (bestval, bestdir)
-                                  })
+                            .zip(
+                                [
+                                    Direction::UpRight,
+                                    Direction::UpLeft,
+                                    Direction::Left,
+                                    Direction::DownLeft,
+                                    Direction::DownRight,
+                                    Direction::Right,
+                                ].iter()
+                                    .cycle()
+                                    .skip(self.turn)
+                                    .take(6),
+                            )
+                            .fold(
+                                (mate_directions[self.turn], Direction::UpRight),
+                                |(bestval, bestdir), (val, &dir)| if val > bestval {
+                                    (val, dir)
+                                } else {
+                                    (bestval, bestdir)
+                                },
+                            )
                             .1,
                         spawn: spawn_directions[..]
                             .iter()
@@ -343,22 +334,27 @@ impl Cell {
                             .skip(1 + self.turn)
                             .take(5)
                             .cloned()
-                            .zip([Direction::UpRight,
-                                  Direction::UpLeft,
-                                  Direction::Left,
-                                  Direction::DownLeft,
-                                  Direction::DownRight,
-                                  Direction::Right]
-                                .iter()
-                                .cycle()
-                                .skip(self.turn)
-                                .take(6))
-                            .fold((spawn_directions[self.turn], Direction::UpRight),
-                                  |(bestval, bestdir), (val, &dir)| if val > bestval {
-                                      (val, dir)
-                                  } else {
-                                      (bestval, bestdir)
-                                  })
+                            .zip(
+                                [
+                                    Direction::UpRight,
+                                    Direction::UpLeft,
+                                    Direction::Left,
+                                    Direction::DownLeft,
+                                    Direction::DownRight,
+                                    Direction::Right,
+                                ].iter()
+                                    .cycle()
+                                    .skip(self.turn)
+                                    .take(6),
+                            )
+                            .fold(
+                                (spawn_directions[self.turn], Direction::UpRight),
+                                |(bestval, bestdir), (val, &dir)| if val > bestval {
+                                    (val, dir)
+                                } else {
+                                    (bestval, bestdir)
+                                },
+                            )
                             .1,
                     }
                 }
