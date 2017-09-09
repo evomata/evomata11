@@ -315,11 +315,6 @@ impl Grid {
                                                     height,
                                                     facing.flip(),
                                                 ));
-
-                                                // No need to continue if we reach 2 attempts.
-                                                if this.delta.movement_attempts.len() == 2 {
-                                                    break;
-                                                }
                                             }
                                         }
                                         Some(Decision {
@@ -344,11 +339,6 @@ impl Grid {
                                                     ),
                                                     source: source,
                                                 });
-
-                                                // No need to continue if we reach 2 attempts.
-                                                if this.delta.mate_attempts.len() == 2 {
-                                                    break;
-                                                }
                                             }
                                         }
                                         _ => {}
