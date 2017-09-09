@@ -93,7 +93,7 @@ pub struct Grid {
     pub explode_requirement: usize,
     pub death_release_coefficient: f64,
     pub explode_amount: f64,
-    tiles: Vec<Hex>,
+    pub tiles: Vec<Hex>,
 }
 
 impl Grid {

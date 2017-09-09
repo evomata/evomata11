@@ -38,7 +38,7 @@ const DEFAULT_SCREEN_ZOOM_RATIO: f32 = 1.0;
 const GRID_WIDTH: usize = 192 * 5 / 2;
 const GRID_HEIGHT: usize = 125 * 5 / 2;
 const DEFAULT_CONSUMPTION: f64 = 0.04;
-const SPAWN_DENSITY: f64 = 0.00001;
+const SPAWN_DENSITY: f64 = 0.000001;
 const DEFAULT_SPAWN_RATE: f64 = SPAWN_DENSITY * GRID_WIDTH as f64 * GRID_HEIGHT as f64;
 const DEFAULT_INHALE_MINIMUM: usize = 500;
 const DEFAULT_INHALE_CAP: usize = 10000;
@@ -324,6 +324,15 @@ fn main() {
                         let hex = g.hex_mut(hex.0 as usize, hex.1 as usize);
                         hex.solution.fluids[0] += MANUAL_FEED_AMOUNT;
                         println!("New food: {}", hex.solution.fluids[0]);
+                    }
+                }
+                Event::KeyboardInput(ElementState::Pressed, _, Some(VKC::C)) => {
+                    println!(
+                        "Cleared {} food",
+                        g.tiles.iter().map(|t| t.solution.fluids[0]).sum::<f64>()
+                    );
+                    for tile in &mut g.tiles {
+                        tile.solution.fluids[0] = 0.0;
                     }
                 }
                 Event::KeyboardInput(ElementState::Pressed, _, Some(VKC::U)) => {
