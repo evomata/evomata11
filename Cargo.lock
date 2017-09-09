@@ -11,7 +11,7 @@ dependencies = [
  "glowygraph 0.7.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "itertools 0.4.19 (registry+https://github.com/rust-lang/crates.io-index)",
  "mli 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "mli_mep 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "mli_mep 0.10.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "nalgebra 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "noise 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "num 0.1.40 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -407,7 +407,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "mli_mep"
-version = "0.10.0"
+version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "mli 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -862,7 +862,7 @@ dependencies = [
 "checksum malloc_buf 0.0.6 (registry+https://github.com/rust-lang/crates.io-index)" = "62bb907fe88d54d8d9ce32a3cceab4218ed2f6b7d35617cafe9adf84e43919cb"
 "checksum memmap 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)" = "f20f72ed93291a72e22e8b16bb18762183bb4943f0f483da5b8be1a9e8192752"
 "checksum mli 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)" = "c5d55f31fdb73a7a5de6a3f0448a12467ec13613ce58afb13273603065d7c116"
-"checksum mli_mep 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)" = "aa91953e1be5ca4cdd1f28d2d3d773ed547ef2817536dc223355085766a49e0d"
+"checksum mli_mep 0.10.2 (registry+https://github.com/rust-lang/crates.io-index)" = "2284d1e800dcd78f0b95089239f33a17dfe9d0fcebb4f55e7451367e7d15fded"
 "checksum nalgebra 0.10.1 (registry+https://github.com/rust-lang/crates.io-index)" = "f754f64bd1a5f5899285c2e182df7ddebcecf466369663be2277ca01b6da5d5d"
 "checksum nalgebra 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)" = "a962b5bbc0c281a284e419a118f781754ed5efeb703953d9a6a790d7f5e1dff8"
 "checksum noise 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "2beecc561ba77c35a7fefab972a29213a42065811a2da81e63671ecfcbff6f63"

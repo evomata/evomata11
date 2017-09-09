@@ -8,12 +8,12 @@ pub const CONST_INPUTS: usize = 9;
 pub const STATIC_INPUTS: usize = 1 + 7 * 8 + 6;
 pub const TOTAL_MEMORY: usize = 4;
 pub const TOTAL_INPUTS: usize = CONST_INPUTS + STATIC_INPUTS + TOTAL_MEMORY;
-// Coefficients (8 * 6), Movement(7), Mate(13), Divide, Turn(6), Explode, Suicide, 2 more because I needed it?
+// Coefficients (8 * 6), Movement(7), Mate(13), Divide, Turn(6), Explode, Suicide
 pub const STATIC_OUTPUTS: usize = 8 * 6 + 7 + 13 + 1 + 6 + 1 + 1;
 pub const TOTAL_OUTPUTS: usize = STATIC_OUTPUTS + TOTAL_MEMORY;
-pub const DEFAULT_MUTATE_LAMBDA: usize = 8;
+pub const DEFAULT_MUTATE_LAMBDA: usize = 2048;
 pub const DEFAULT_CROSSOVER_POINTS: usize = 1;
-pub const INTERNAL_INSTRUCTIONS: usize = 32;
+pub const INTERNAL_INSTRUCTIONS: usize = 64;
 const MUTATE_PROBABILITY: f64 = 1.0;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
