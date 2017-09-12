@@ -2,7 +2,9 @@ mod brain;
 
 use rand::{Isaac64Rng, Rng};
 use itertools::Itertools;
-use super::fluid::{NORMAL_DIFFUSION, TOTAL_FLUIDS};
+use fluid::{NORMAL_DIFFUSION, RELATIVE_CELL_DIFFUSION, TOTAL_FLUIDS};
+
+use std::cmp::Ordering::*;
 
 const INITIAL_INHALE: usize = 2000;
 
@@ -76,6 +78,29 @@ impl Cell {
             brain: brain::Brain::new(rng),
             turn: rng.gen_range(0, 6),
         }
+    }
+
+    fn choose_direction(&self, choices: [f64; 6]) -> Direction {
+        choices[..]
+            .iter()
+            .cloned()
+            .zip(
+                [
+                    Direction::UpRight,
+                    Direction::UpLeft,
+                    Direction::Left,
+                    Direction::DownLeft,
+                    Direction::DownRight,
+                    Direction::Right,
+                ].iter()
+                    .cycle()
+                    .skip(self.turn)
+                    .take(6),
+            )
+            .max_by(|n0, n1| if n0.0 < n1.0 { Less } else { Greater })
+            .unwrap()
+            .1
+            .clone()
     }
 
     pub fn decide(&mut self, fluids: [&[f64; TOTAL_FLUIDS]; 7], cells: &[bool; 6]) -> Decision {
@@ -189,8 +214,6 @@ impl Cell {
             *f = compute.next().unwrap();
         }
 
-        let divide_attempt = compute.next().unwrap();
-
         let mut turn_directions = [0f64; 6];
         for f in &mut turn_directions {
             *f = compute.next().unwrap();
@@ -205,160 +228,30 @@ impl Cell {
             .iter()
             .cloned()
             .enumerate()
-            .fold((None, 0.0), |best, n| if n.1 > best.1 {
-                (Some(n.0), n.1)
-            } else {
-                best
-            })
-            .0
+            .max_by(|n0, n1| if n0.1 < n1.1 { Less } else { Greater })
+            .map(|n| n.0)
         {
-            self.turn = dir;
+            // Shift the turn direction by how much we have turned so it is relative.
+            self.turn = (dir + self.turn) % 6;
         }
 
         self.brain.memory.iter_mut().set_from(compute);
         Decision {
-            choice: match [
-                move_attempt,
-                divide_attempt,
-                mate_attempt,
-                explode_attempt.abs(),
-                suicide_attempt,
-            ].iter()
+            choice: match [move_attempt, mate_attempt, explode_attempt, suicide_attempt]
+                .iter()
                 .cloned()
                 .enumerate()
-                .fold((None, 0.0), |best, n| if n.1 > best.1 {
-                    (Some(n.0), n.1)
-                } else {
-                    best
-                })
-                .0 {
-                Some(0) => {
-                    Choice::Move(
-                        move_directions[..]
-                            .iter()
-                            .cycle()
-                            .skip(1 + self.turn)
-                            .take(5)
-                            .cloned()
-                            .zip(
-                                [
-                                    Direction::UpRight,
-                                    Direction::UpLeft,
-                                    Direction::Left,
-                                    Direction::DownLeft,
-                                    Direction::DownRight,
-                                    Direction::Right,
-                                ].iter()
-                                    .cycle()
-                                    .skip(self.turn)
-                                    .take(6),
-                            )
-                            .fold(
-                                (move_directions[self.turn], Direction::UpRight),
-                                |(bestval, bestdir), (val, &dir)| if val > bestval {
-                                    (val, dir)
-                                } else {
-                                    (bestval, bestdir)
-                                },
-                            )
-                            .1,
-                    )
-                }
+                .filter(|p| p.1 > 0.0)
+                .max_by(|n0, n1| if n0.1 < n1.1 { Less } else { Greater })
+                .map(|n| n.0) {
+                Some(0) => Choice::Move(self.choose_direction(move_directions)),
                 Some(1) => {
-                    let direction = spawn_directions[..]
-                        .iter()
-                        .cycle()
-                        .skip(1 + self.turn)
-                        .take(5)
-                        .cloned()
-                        .zip(
-                            [
-                                Direction::UpRight,
-                                Direction::UpLeft,
-                                Direction::Left,
-                                Direction::DownLeft,
-                                Direction::DownRight,
-                                Direction::Right,
-                            ].iter()
-                                .cycle()
-                                .skip(self.turn)
-                                .take(6),
-                        )
-                        .fold(
-                            (spawn_directions[self.turn], Direction::UpRight),
-                            |(bestval, bestdir), (val, &dir)| if val > bestval {
-                                (val, dir)
-                            } else {
-                                (bestval, bestdir)
-                            },
-                        )
-                        .1;
                     Choice::Divide {
-                        mate: direction,
-                        spawn: direction,
+                        mate: self.choose_direction(mate_directions),
+                        spawn: self.choose_direction(spawn_directions),
                     }
                 }
                 Some(2) => {
-                    Choice::Divide {
-                        mate: mate_directions[..]
-                            .iter()
-                            .cycle()
-                            .skip(1 + self.turn)
-                            .take(5)
-                            .cloned()
-                            .zip(
-                                [
-                                    Direction::UpRight,
-                                    Direction::UpLeft,
-                                    Direction::Left,
-                                    Direction::DownLeft,
-                                    Direction::DownRight,
-                                    Direction::Right,
-                                ].iter()
-                                    .cycle()
-                                    .skip(self.turn)
-                                    .take(6),
-                            )
-                            .fold(
-                                (mate_directions[self.turn], Direction::UpRight),
-                                |(bestval, bestdir), (val, &dir)| if val > bestval {
-                                    (val, dir)
-                                } else {
-                                    (bestval, bestdir)
-                                },
-                            )
-                            .1,
-                        spawn: spawn_directions[..]
-                            .iter()
-                            .cycle()
-                            .skip(1 + self.turn)
-                            .take(5)
-                            .cloned()
-                            .zip(
-                                [
-                                    Direction::UpRight,
-                                    Direction::UpLeft,
-                                    Direction::Left,
-                                    Direction::DownLeft,
-                                    Direction::DownRight,
-                                    Direction::Right,
-                                ].iter()
-                                    .cycle()
-                                    .skip(self.turn)
-                                    .take(6),
-                            )
-                            .fold(
-                                (spawn_directions[self.turn], Direction::UpRight),
-                                |(bestval, bestdir), (val, &dir)| if val > bestval {
-                                    (val, dir)
-                                } else {
-                                    (bestval, bestdir)
-                                },
-                            )
-                            .1,
-                    }
-                }
-                Some(3) => {
                     if explode_attempt > 1.0 {
                         Choice::Explode(true)
                     } else if explode_attempt < -1.0 {
@@ -367,7 +260,7 @@ impl Cell {
                         Choice::Nothing
                     }
                 }
-                Some(4) => {
+                Some(3) => {
                     if suicide_attempt > 1.0 {
                         Choice::Suicide
                     } else {
@@ -386,12 +279,7 @@ impl Cell {
                         if j < 4 {
                             let f = coefficients[i][j];
                             if f.is_normal() {
-                                let nf = sig(f);
-                                if nf > 0.0 {
-                                    NORMAL_DIFFUSION[j] * (nf * 0.5 + 1.0)
-                                } else {
-                                    NORMAL_DIFFUSION[j] * (nf * 1.0 / 3.0 + 1.0)
-                                }
+                                NORMAL_DIFFUSION[j] * (sig(f) * RELATIVE_CELL_DIFFUSION[j] + 1.0)
                             } else {
                                 NORMAL_DIFFUSION[j]
                             }

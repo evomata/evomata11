@@ -7,7 +7,7 @@ use noise::{Brownian2, perlin2};
 use num_cpus;
 use crossbeam;
 
-const KILL_FLUID_COLOR_NORMAL: f64 = 0.01;
+const KILL_FLUID_COLOR_NORMAL: f64 = 0.009;
 // const SIGNAL_FLUID_SQRT_NORMAL: f64 = 5.0;
 const SIGNAL_FLUID_COLOR_COEFFICIENT: f32 = 300.0;
 const FOOD_FLUID_COLOR_NORMAL: f64 = 600.0;

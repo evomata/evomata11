@@ -38,7 +38,7 @@ const DEFAULT_SCREEN_ZOOM_RATIO: f32 = 1.0;
 const GRID_WIDTH: usize = 192 * 5 / 2;
 const GRID_HEIGHT: usize = 125 * 5 / 2;
 const DEFAULT_CONSUMPTION: f64 = 0.04;
-const SPAWN_DENSITY: f64 = 0.00001;
+const SPAWN_DENSITY: f64 = 0.000005;
 const DEFAULT_SPAWN_RATE: f64 = SPAWN_DENSITY * GRID_WIDTH as f64 * GRID_HEIGHT as f64;
 const DEFAULT_INHALE_MINIMUM: usize = 500;
 const DEFAULT_INHALE_CAP: usize = 10000;
@@ -60,6 +60,7 @@ const GRID_EXPLODE_MULTIPLY: f64 = 1.25;
 const SECONDS_BETWEEN_AUTOSAVES: u64 = 60 * 30;
 
 const MANUAL_FEED_AMOUNT: f64 = 500000.0;
+const MANUAL_KILL_AMOUNT: f64 = 500000.0;
 
 // Ratio of width/height in a 2d circle tight-pack or a hex grid.
 const WIDTH_HEIGHT_RATIO: f32 = 0.86602540378;
@@ -326,6 +327,34 @@ fn main() {
                         println!("New food: {}", hex.solution.fluids[0]);
                     }
                 }
+                // Make kill chemicals at cursor.
+                Event::KeyboardInput(ElementState::Pressed, _, Some(VKC::K)) => {
+                    let relative_coord = (
+                        last_mouse_pos.0 as f32 - center_mouse_coord.0,
+                        last_mouse_pos.1 as f32 - center_mouse_coord.1,
+                    );
+
+                    let hex = (
+                        center.0 + relative_coord.0 * hex_per_width_pixel,
+                        center.1 - relative_coord.1 * hex_per_height_pixel,
+                    );
+                    // Adjust the width based on the height.
+                    let hex = (
+                        if hex.1 as isize % 2 == 0 {
+                            hex.0 - 0.25
+                        } else {
+                            hex.0 + 0.25
+                        },
+                        hex.1,
+                    );
+                    if hex.0 > 0.0 && hex.0 < g.width as f32 && hex.1 > 0.0 &&
+                        hex.1 < g.height as f32
+                    {
+                        let hex = g.hex_mut(hex.0 as usize, hex.1 as usize);
+                        hex.solution.fluids[3] += MANUAL_KILL_AMOUNT;
+                        println!("New kill fluid: {}", hex.solution.fluids[3]);
+                    }
+                }
                 Event::KeyboardInput(ElementState::Pressed, _, Some(VKC::C)) => {
                     println!(
                         "Cleared {} food",
@@ -334,6 +363,12 @@ fn main() {
                     for tile in &mut g.tiles {
                         tile.solution.fluids[0] = 0.0;
                     }
+                }
+                Event::KeyboardInput(ElementState::Pressed, _, Some(VKC::H)) => {
+                    println!("Reset screen ratio");
+                    screen_hex_ratio = DEFAULT_SCREEN_ZOOM_RATIO * g.height as f32 *
+                        WIDTH_HEIGHT_RATIO;
+                    center = (0.5 * g.width as f32, 0.5 * g.height as f32);
                 }
                 Event::KeyboardInput(ElementState::Pressed, _, Some(VKC::U)) => {
                     g.spawn_rate *= GRID_SPAWN_MULTIPLY;
