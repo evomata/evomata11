@@ -27,7 +27,7 @@ struct Delta {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Hex {
     pub solution: Solution,
-    pub cell: Option<Cell>,
+    pub cell: Option<Box<Cell>>,
     pub decision: Option<Decision>,
     delta: Delta,
 }
@@ -67,6 +67,24 @@ impl Hex {
             [0.5, 0.5, 0.5],
             [0.5, 0.0, 0.5],
             [0.5, 0.5, 0.0],
+        ];
+        for i in 0..4 {
+            let signalf = (self.solution.fluids[4 + i] as f32).abs() *
+                SIGNAL_FLUID_COLOR_COEFFICIENT;
+            for j in 0..3 {
+                ocolors[j] += signal_colors[i][j] * signalf;
+            }
+        }
+        ocolors
+    }
+
+    pub fn pure_color(&self) -> [f32; 4] {
+        let mut ocolors = [0.0, 0.0, 0.0, 1.0];
+        let signal_colors = [
+            [0.7, 0.0, 0.0],
+            [0.0, 0.7, 0.0],
+            [0.0, 0.0, 0.7],
+            [0.4, 0.4, 0.0],
         ];
         for i in 0..4 {
             let signalf = (self.solution.fluids[4 + i] as f32).abs() *
@@ -208,14 +226,14 @@ impl Grid {
             for _ in 0..self.spawn_rate as usize {
                 let tile = rng.gen_range(0, self.width * self.height);
                 if self.tiles[tile].cell.is_none() {
-                    self.tiles[tile].cell = Some(Cell::new(rng));
+                    self.tiles[tile].cell = Some(Box::new(Cell::new(rng)));
                 }
             }
         } else {
             if rng.next_f64() < self.spawn_rate {
                 let tile = rng.gen_range(0, self.width * self.height);
                 if self.tiles[tile].cell.is_none() {
-                    self.tiles[tile].cell = Some(Cell::new(rng));
+                    self.tiles[tile].cell = Some(Box::new(Cell::new(rng)));
                 }
             }
         }
@@ -408,13 +426,13 @@ impl Grid {
                                 .unwrap()
                                 .inhale = 0;
                         }
-                        Some(
+                        Some(Box::new(
                             self.hex_mut(mate.source.0, mate.source.1)
                                 .cell
                                 .as_mut()
                                 .unwrap()
                                 .divide(rng),
-                        )
+                        ))
                     } else {
                         if self.hex(mate.mate.0, mate.mate.1).cell.is_some() {
                             // Apply movement and divide cost to source.
@@ -437,7 +455,7 @@ impl Grid {
                                     .inhale = 0;
                             }
                             // This is safe so long as the cells arent the same.
-                            Some(
+                            Some(Box::new(
                                 unsafe {
                                     mem::transmute::<_, &mut Hex>(
                                         self.hex_mut(mate.source.0, mate.source.1),
@@ -449,7 +467,7 @@ impl Grid {
                                         &self.hex(mate.mate.0, mate.mate.1).cell.as_ref().unwrap(),
                                         rng,
                                     ),
-                            )
+                            ))
                         } else {
                             None
                         }

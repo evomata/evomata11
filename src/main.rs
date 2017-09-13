@@ -125,6 +125,7 @@ fn main() {
     let mut mouse_pressed = false;
 
     let mut rendering_enabled = true;
+    let mut pure_color_mode = false;
 
     let mut last_autosave = time::Instant::now();
 
@@ -169,6 +170,7 @@ fn main() {
             let numcpus = num_cpus::get();
 
             crossbeam::scope(|scope| {
+                use std::ops::Deref;
                 let g = &g;
                 // Render nodes
                 for i in 0..numcpus {
@@ -180,7 +182,7 @@ fn main() {
                                     append_circle(&mut v,
                                                   0.6,
                                                   0.6,
-                                                  g.hex(x, y).color(),
+                                                  if pure_color_mode {g.hex(x, y).pure_color()} else {g.hex(x, y).color()},
                                                   &na::Isometry2::new(na::Vector2::new(if y % 2 == 0 {
                                                                                            1.5
                                                                                        } else {
@@ -201,8 +203,7 @@ fn main() {
                                         append_circle(&mut v,
                                                       0.3,
                                                       0.3,
-                                                      //c.color(),
-                                                      g.hex(x, y).signal_color(),
+                                                      g.hex(x, y).cell.as_ref().map(Deref::deref).map(cell::Cell::color).unwrap(),
                                                       &na::Isometry2::new(na::Vector2::new(if y % 2 == 0 {
                                                                                                1.5
                                                                                            } else {
@@ -361,6 +362,13 @@ fn main() {
                         tile.solution.fluids[0] = 0.0;
                     }
                 }
+                Event::KeyboardInput(ElementState::Pressed, _, Some(VKC::V)) => {
+                    pure_color_mode = !pure_color_mode;
+                    println!(
+                        "Pure color mode {}",
+                        if pure_color_mode { "on" } else { "off" }
+                    );
+                }
                 Event::KeyboardInput(ElementState::Pressed, _, Some(VKC::H)) => {
                     println!("Reset screen ratio");
                     screen_hex_ratio = DEFAULT_SCREEN_ZOOM_RATIO * g.height as f32 *
@@ -384,6 +392,20 @@ fn main() {
                     g.explode_requirement =
                         (g.explode_requirement as f64 / GRID_EXPLODE_MULTIPLY) as usize;
                     println!("New explode requirement: {}", g.explode_requirement);
+                }
+                Event::KeyboardInput(ElementState::Pressed, _, Some(VKC::LBracket)) => {
+                    g.death_release_coefficient /= GRID_EXPLODE_MULTIPLY;
+                    println!(
+                        "New death release coefficient: {}",
+                        g.death_release_coefficient
+                    );
+                }
+                Event::KeyboardInput(ElementState::Pressed, _, Some(VKC::RBracket)) => {
+                    g.death_release_coefficient *= GRID_EXPLODE_MULTIPLY;
+                    println!(
+                        "New death release coefficient: {}",
+                        g.death_release_coefficient
+                    );
                 }
                 Event::KeyboardInput(ElementState::Pressed, _, Some(VKC::Q)) => {
                     g.explode_amount *= GRID_EXPLODE_MULTIPLY;

@@ -79,6 +79,9 @@ impl Cell {
             turn: rng.gen_range(0, 6),
         }
     }
+    pub fn color(&self) -> [f32; 4] {
+        [1.0, 1.0, 1.0, 1.0]
+    }
 
     fn choose_direction(&self, choices: [f64; 6]) -> Direction {
         choices[..]
