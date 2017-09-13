@@ -45,7 +45,7 @@ const DEFAULT_DIVIDE_COST: usize = 5;
 const DEFAULT_EXPLODE_REQUIREMENT: usize = 2100;
 const DEFAULT_EXPLODE_AMOUNT: f64 = 0.5;
 
-const DEFAULT_DEATH_RELEASE_COEFFICIENT: f64 = 1.0;
+const DEFAULT_DEATH_RELEASE_COEFFICIENT: f64 = 0.5;
 
 // TODO: Figure out when lines are used and set it correctly.
 const SCROLL_LINES_RATIO: f32 = 0.707;
@@ -53,6 +53,7 @@ const SCROLL_PIXELS_RATIO: f32 = 0.707;
 
 const GRID_SPAWN_MULTIPLY: f64 = 1.25;
 const GRID_EXPLODE_MULTIPLY: f64 = 1.25;
+const GRID_RELEASE_MULTIPLY: f64 = 1.25992104989;
 
 const SECONDS_BETWEEN_AUTOSAVES: u64 = 60 * 30;
 
@@ -394,14 +395,14 @@ fn main() {
                     println!("New explode requirement: {}", g.explode_requirement);
                 }
                 Event::KeyboardInput(ElementState::Pressed, _, Some(VKC::LBracket)) => {
-                    g.death_release_coefficient /= GRID_EXPLODE_MULTIPLY;
+                    g.death_release_coefficient /= GRID_RELEASE_MULTIPLY;
                     println!(
                         "New death release coefficient: {}",
                         g.death_release_coefficient
                     );
                 }
                 Event::KeyboardInput(ElementState::Pressed, _, Some(VKC::RBracket)) => {
-                    g.death_release_coefficient *= GRID_EXPLODE_MULTIPLY;
+                    g.death_release_coefficient *= GRID_RELEASE_MULTIPLY;
                     println!(
                         "New death release coefficient: {}",
                         g.death_release_coefficient
